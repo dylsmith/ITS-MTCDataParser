@@ -82,6 +82,7 @@ void parseTrips()
 	}
 
 
+
 	//#pragma omp parallel for
 	for (int i = 0; i < TRIP_FILE_SIZE; i++)
 	{
@@ -273,7 +274,7 @@ void analyzeTrips()
 		}
 	}
 			
-	cout << ((long double)sharedtrips / TRIP_FILE_SIZE) / 100 << totalloop << " % of trips were shared." << endl;
+	cout << ((long double)sharedtrips / TRIP_FILE_SIZE) << totalloop << " % of trips were shared." << endl;
 }
 
 void generateClosePoints(Distances &dist)
@@ -308,6 +309,7 @@ void generateClosePoints(Distances &dist)
 void timerWrapper()
 {
 	Timer total("Total");
+
 	reserveSpace();
 
 	Distances dist(DISTANCE_FILE);

@@ -157,14 +157,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
-    <Text Include="t.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ClosePoints.h" />
     <ClInclude Include="Distances.h" />
     <ClInclude Include="Globals.h" />
     <ClInclude Include="DataClasses.h" />
-    <ClInclude Include="Header.h" />
     <ClInclude Include="QuickParser.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="stdafx.h" />
