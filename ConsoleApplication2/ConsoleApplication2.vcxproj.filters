@@ -21,13 +21,7 @@
     <ClInclude Include="targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ClosePoints.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="DataClasses.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Distances.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Globals.h">
@@ -37,6 +31,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Timer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FastRand.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MiscFunctions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -53,13 +53,7 @@
     <ClCompile Include="QuickParser_inline.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Distances.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ClosePoints.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

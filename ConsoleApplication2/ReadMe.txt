@@ -6,6 +6,12 @@ trip potentially shareable requirements:
 	income < some max income 
 	passes random sampling (static % success) //0.1
 
+	globals:
+		MaxIncome
+		MinDistanceTraveled
+		RandomFailChance
+		TripModes
+		TripPurposes
 
 trip sharing requirements:
 	have close origin and destination

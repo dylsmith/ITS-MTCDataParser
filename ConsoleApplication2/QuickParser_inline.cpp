@@ -8,21 +8,10 @@
 inline void QuickParser::parseComma()
 {
 	while (*(++loc) != ',');
-	/*
-	while (*loc != ',')// && *loc != '\n' && *loc != '\n')
-		loc++;
-	//if (*loc != ',')
-	//	cout << "Parsed over a newline" << endl;
-	loc++;*/
 }
 inline void QuickParser::parseNewLine()
 {
 	while (*(++loc) != '\n');
-	/*
-	while (*loc != '\n')// && *loc != '\r' && *loc != '\0')
-		loc++;
-	loc++;*/
-
 }
 inline float QuickParser::parseFloat()
 {
@@ -36,13 +25,30 @@ inline int QuickParser::parseInt()
 	int ret = strtol(loc, &loc, 10);
 	return ret;
 }
+
 inline char* QuickParser::parseString()
 {
+	/*
 	int i = 0;
 	while ((loc)[++i] != ',' && (loc)[i] != '\n');
 	char* ret = new char[i + 1];
 	memcpy(ret, loc, i);
 	ret[i] = '\0';
 	loc += i + 1;
+	return ret;*/
+	
+
+
+	int i = 1;
+	while (loc[i] != ',' && loc[i] != '\n'&& loc[i] != '\r')
+		++i;
+	++i;
+	char* ret = new char[i];
+	strncpy_s(ret-1,i, loc, _TRUNCATE);
+	ret[i-1] = '\0';
+	loc += (i - 1);
 	return ret;
+
+	//i = length of str + 1
+	//loc points to 
 }
