@@ -2,28 +2,23 @@
 #define DATACLASSES_H
 
 #include "stdafx.h"
-#include "FastRand.h"
 #include "Globals.h"
-#include "MiscFunctions.h"
 
 #include <map>
 #include <vector>
-#include <unordered_set>
 #include <iostream>
 using namespace std;
-
-
 
 struct Trip
 {
 	int id;
 	int perid;
+	int tourid;
 	int origin;
 	int destination;
 	int hour;
 	int numPassengers;
 
-	int income;
 	int mode;
 	string purpose;
 
@@ -32,25 +27,9 @@ struct Trip
 
 	int shareable; //1 = yes, 0 = no, -1 = unknown
 
-	Trip()
-	{
-		sharingList.reserve(4);
-		shareable = -1;
-	}
+	Trip();
 
-	bool isShareable()
-	{
-		if (shareable == -1)
-			shareable = (
-				distanceBetween(origin, destination) > MinDistanceTraveled &&	//Distance check
-				income < MaxIncome &&
-				TripModes[mode] == 1 &&											//Mode is valid check  (array index of the mode must be 1)
-				((fastrand() % 100) + 1) > RandomFailChance &&					//Random chance (random int must be greater than fail chance)
-				TripPurposes.find(purpose) != TripPurposes.end()				//Purpose check (purpose must be in the set of allowed purposes)
-			);
-		return shareable;
-		
-	}
+	bool isShareable();
 };
 
 
@@ -59,12 +38,10 @@ struct Tour
 {
 	int id;
 	int hhid;
+	int numStops;
 	vector<Trip*> trips;
 
-	Tour()
-	{
-		trips.reserve(5);
-	};
+	Tour();
 };
 
 //Tourids are ordered 0-5, or 11 for an optional at-work lunch trip for some odd reason
@@ -74,9 +51,7 @@ struct Person
 	int income;
 	map<int, Tour*> tours;
 
-	Person()
-	{	
-	};
+	Person();
 };
 
 #endif
