@@ -10,6 +10,8 @@ using namespace std;
 
 bool find(vector<short>& v, short val);
 
+void write(string s);
+
 void commasperline();
 
 void charsinfile();

@@ -204,7 +204,8 @@ void shareTrips()
 	Timer ti("Sharing trips");
 	for (int tripNum = 0; tripNum < TRIP_FILE_SIZE; tripNum++)
 	{
-		if (tripNum % 1000000 == 0) cout << "Sharing trips: " << (long double)tripNum / TRIP_FILE_SIZE * 100 << "%" << endl;
+		if (tripNum % 1000000 == 0) write("Shairng trips: " + to_string((long double)tripNum / TRIP_FILE_SIZE * 100) + "%\n");
+		//if (tripNum % 1000000 == 0) cout << "Sharing trips: " << (long double)tripNum / TRIP_FILE_SIZE * 100 << "%" << endl;
 		Trip& trip = all_trips[tripNum];
 		if (trip.shareable != BEING_SHARED)
 		{
@@ -328,7 +329,9 @@ void analyzeTrips()
 						{
 							for (Trip* trip2 : organized[hour][closeOrigin][closeDestination])
 							{
-								if (++total % 100000000 == 0) cout << "Comparing trips: " << (((double)origin + (NUM_LOCATIONS * hour)) / (NUM_LOCATIONS * 24)) * 100 << "%" << endl;
+								if (++total % 100000000 == 0)
+									write("Comparing trips: " + to_string((((double)origin + (NUM_LOCATIONS * hour)) / (NUM_LOCATIONS * 24)) * 100) + "%\n");
+								//if (++total % 100000000 == 0) cout << "Comparing trips: " << (((double)origin + (NUM_LOCATIONS * hour)) / (NUM_LOCATIONS * 24)) * 100 << "%" << endl;
 								if (compareTrips(*trip1, *trip2))
 								{
 									if (trip2->id < 0)
@@ -421,9 +424,9 @@ void timerWrapper()
 			cout << "  " << sh << endl;
 		}
 	}
-
-
 }
+
+
 
 int _tmain(int argc, _TCHAR* argv[])
 {

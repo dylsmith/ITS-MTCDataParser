@@ -17,6 +17,26 @@ bool find(vector<short>& v, short val)
 }
 
 
+int writeLoc = 0;
+void write(string s)
+{
+
+	int len = s.length();
+	while (writeLoc > 0)
+	{
+		if (writeLoc >= len)
+			cout << ' ' << '\b';
+		writeLoc--;
+		cout << '\b';
+	}
+
+	cout << s;
+	writeLoc = len; 
+}
+
+
+
+
 void commasperline()
 {
 	QuickParser q(TOUR_FILE);
