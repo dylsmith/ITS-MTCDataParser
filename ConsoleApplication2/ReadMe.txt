@@ -1,4 +1,20 @@
 
+% of people who can potentially share with at least one other person
+% of people who actually share
+% of trips that are doable
+% of trips that are shreable
+% of tours actually shareable
+
+When looking at tour level, each leg of the trip, if doable, has a random chance of failure
+
+Make sas many possible people share during sharing selection
+Then determine sharing effectiveness with minimum and maximujm people in each car
+
+Record nnumber of shared trips originating/arriving at each point
+
+for VMT, ensure calculated trips were previously driving and not biking
+Ensure one person ahs a vehicle in each rideshare
+
 trip potentially shareable requirements:
 	distance traveled > some value
 	trip mode in some set of viable trip modes

@@ -20,6 +20,7 @@ double distanceBetween2(int origin, int destination)
 
 bool Trip::isShareable()
 {
+
 	if (shareable == UNKNOWN)
 		shareable = (
 		all_people[perid].tours[tourid]->numStops >= MinNumStops &&		//Number of stops
@@ -351,6 +352,7 @@ void averageSharedTrips()
 	Timer ti("Counting average number of shared trips");
 	long int totalshared = 0;
 	long double milesSaved = 0;
+	long int ridesSaved = 0;
 	for (int i = 0; i < TRIP_FILE_SIZE; i++)
 	{
 		int driversSaved = all_trips[i].actualSharing.size();
@@ -358,6 +360,7 @@ void averageSharedTrips()
 		milesSaved += (double)driversSaved * distanceBetween2(all_trips[i].origin, all_trips[i].destination);
 	}
 
+	
 	cout << "Each trip was actually shared with an average of " << (double)totalshared / TRIP_FILE_SIZE << " other trips." << endl;
 	cout << "Saved " << milesSaved << " vehicle miles." << endl;
 }

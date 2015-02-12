@@ -43,7 +43,7 @@ static int DoableTripModes[] = {0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 
 static int MinNumStops = 5; //Number of stops must be this or more
 
-static int MaxIncome = 3000;						//Income must be below this
+static int MaxIncome = 200000;						//Income must be below this
 
 static float MinDistanceTraveled = 1.0;				//Distance between origin and dest. must be above this
 
