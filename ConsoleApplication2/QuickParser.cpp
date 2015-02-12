@@ -32,6 +32,7 @@ QuickParser::QuickParser(string filename)
 	if (read != length)
 		cout << "QuickParser wanted " << length << "bytes from file, but got " << read << endl;
 	fclose(fp);
+	delete fp;
 
 	loc = file;
 }

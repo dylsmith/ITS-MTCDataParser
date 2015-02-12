@@ -384,6 +384,19 @@ void OMPInfo()
 	cout << "Nested parallelism: " << omp_get_nested() << endl;
 }
 
+void cleanUp()
+{
+	free((void*)close);
+	delete[] dist;
+	delete[] all_people;
+	delete[] all_tours;
+	delete[] all_trips;
+	delete[] closePoints;
+	for (int i = 0; i < 24; i++)
+		for (int k = 1; k <= NUM_LOCATIONS; k++)
+			delete organized[i][k];
+}
+
 void timerWrapper()
 {
 	Timer total("Total");
