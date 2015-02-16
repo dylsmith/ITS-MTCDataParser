@@ -22,8 +22,8 @@ struct Trip
 	int mode;
 	string purpose;
 
-	vector<int> sharingList;
-	vector<int> actualSharing;
+	vector<int> potentialSharing;
+	vector<int>* actualSharing;
 
 	int shareable; //1 = yes, 0 = no, -1 = unknown
 
@@ -40,6 +40,8 @@ struct Tour
 	int hhid;
 	int numStops;
 	vector<Trip*> trips;
+
+	int doableTripCount;
 
 	Tour();
 };

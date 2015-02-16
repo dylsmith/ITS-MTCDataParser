@@ -182,132 +182,16 @@ void parseTrips()
 
 void remove(vector<int>& v, int trip)
 {
-
-
 	vector<int>::iterator it = v.begin();
 	while (*it != trip)
 		it++;
 	v.erase(it);
 }
 
-void removeTrip(Trip& trip)
-{
-	trip.sharingList.clear();
-	for (int otherTrip : trip.sharingList)
-	{
-		remove(all_trips[otherTrip].sharingList, trip.id);
-	}
-}
-
-void shareTrips()
-{
-	Timer ti("Sharing trips");
-	for (int tripNum = 0; tripNum < TRIP_FILE_SIZE; tripNum++)
-	{
-		if (tripNum % 1000000 == 0) write("Shairng trips: " + to_string((long double)tripNum / TRIP_FILE_SIZE * 100) + "%\n");
-		//if (tripNum % 1000000 == 0) cout << "Sharing trips: " << (long double)tripNum / TRIP_FILE_SIZE * 100 << "%" << endl;
-		Trip& trip = all_trips[tripNum];
-		if (trip.shareable != BEING_SHARED)
-		{
-			for (int nextTripID : trip.sharingList)
-			{
-				Trip& nextTrip = all_trips[nextTripID];
-				if (nextTrip.shareable != BEING_SHARED && trip.numPassengers + nextTrip.numPassengers <= MaxPeople)
-				{
-					trip.shareable = BEING_SHARED;
-					nextTrip.shareable = BEING_SHARED;
-					trip.actualSharing.push_back(nextTripID);
-					trip.numPassengers += nextTrip.numPassengers;
-				}
-			}
-			/*
-			//cout << "For trip " << trip.id << endl;
-			//for (int i : trip.sharingList) cout << "  " << i << endl;
-			while (trip.sharingList.size() > 0)
-			{
-				//int nextTripNum = fastrand() % trip.sharingList.size();
-				Trip& nextTrip = all_trips[trip.sharingList[fastrand() % trip.sharingList.size()]];
-				if (nextTrip.shareable != BEING_SHARED && trip.numPassengers + nextTrip.numPassengers <= MaxPeople)
-				{
-					//removeTrip(nextTrip);	//Removes this trip from every trip that thinks it can share with it
-					trip.actualSharing.push_back(nextTrip.id);
-					trip.shareable = BEING_SHARED;
-					nextTrip.shareable = BEING_SHARED;
-					//nextTrip.actualSharing.push_back(trip.id);
-					trip.numPassengers += nextTrip.numPassengers;
-
-
-				}
-				remove(trip.sharingList, nextTrip.id);*/
-
-				/*
-				else
-				{
-				//cout << "Removing " << tripNum << " from " << nextTrip.id << endl;
-				//for (int j : nextTrip.sharingList) cout << j << " "; cout << endl;
-				//remove(nextTrip.sharingList, tripNum);
-				//cout << "Removing " << nextTrip.id << " from " << tripNum << endl;
-				remove(trip.sharingList, nextTrip.id);
-				}*/
-			//}
-		}
-	}
-}
-
-void checkTours()
-{
-	for (int i = 0; i < TOUR_FILE_SIZE; i++)
-	{
-		Tour& tour = all_tours[i];
-		int doableTrips = 0;
-		for (Trip*& trip : tour.trips)
-		{
-			if (trip->isShareable() || DoableTripModes[trip->mode])
-			{
-
-			}
-		}
-	}
-}
-
 inline bool compareTrips(Trip& trip1, Trip& trip2)
 {
-	return (trip1.perid != trip2.perid 
-		//find(closePoints[trip1.destination].begin(), closePoints[trip1.destination].end(), trip2.destination) != closePoints[trip1.destination].end()
-		);
+	return (trip1.perid != trip2.perid);
 }
-
-/*
-void analyzeTrips()
-{
-	Timer ct("Comparing trips");
-
-	long int sharedtrips = 0;
-	long long int total = 0;
-	for (int hour = 0; hour < 24; hour++)
-	{
-		for (int origin = 1; origin <= NUM_LOCATIONS; origin++)
-		{
-			for (Trip* trip1 : organized[hour][origin])
-			{
-				for (int closePoint : closePoints[origin])
-				{
-					for (Trip* trip2 : organized[hour][closePoint])
-					{
-						if (++total % 100000000 == 0) cout << (double)origin / NUM_LOCATIONS << ": " << total << endl;
-						if (compareTrips(*trip1, *trip2))
-						{
-							trip1->sharingList.push_back(trip2->id);
-							sharedtrips++;
-						}
-					}
-				}
-			}
-		}
-	}
-
-	cout << (((long double)sharedtrips / TRIP_FILE_SIZE) * 100) << "% of trips were shared." << endl;
-}*/
 
 void analyzeTrips()
 {
@@ -334,9 +218,7 @@ void analyzeTrips()
 								//if (++total % 100000000 == 0) cout << "Comparing trips: " << (((double)origin + (NUM_LOCATIONS * hour)) / (NUM_LOCATIONS * 24)) * 100 << "%" << endl;
 								if (compareTrips(*trip1, *trip2))
 								{
-									if (trip2->id < 0)
-										cout << trip2->id << endl;
-									trip1->sharingList.push_back(trip2->id);
+									trip1->potentialSharing.push_back(trip2->id);
 									sharedtrips++;
 								}
 							}
@@ -346,26 +228,7 @@ void analyzeTrips()
 			}
 		}
 	}
-
 	cout << (((long double)sharedtrips / TRIP_FILE_SIZE) * 100) << "% of trips were shared." << endl;
-}
-
-void averageSharedTrips()
-{
-	Timer ti("Counting average number of shared trips");
-	long int totalshared = 0;
-	long double milesSaved = 0;
-	long int ridesSaved = 0;
-	for (int i = 0; i < TRIP_FILE_SIZE; i++)
-	{
-		int driversSaved = all_trips[i].actualSharing.size();
-		totalshared += driversSaved;
-		milesSaved += (double)driversSaved * distanceBetween2(all_trips[i].origin, all_trips[i].destination);
-	}
-
-	
-	cout << "Each trip was actually shared with an average of " << (double)totalshared / TRIP_FILE_SIZE << " other trips." << endl;
-	cout << "Saved " << milesSaved << " vehicle miles." << endl;
 }
 
 void reserveSpace()
@@ -378,13 +241,6 @@ void reserveSpace()
 	all_tours = new Tour[TOUR_FILE_SIZE];
 	all_trips = new Trip[TRIP_FILE_SIZE];
 	closePoints = new vector<short>[NUM_LOCATIONS + 1];
-}
-
-void OMPInfo()
-{
-	cout << "Max threads: " << omp_get_max_threads() << endl;
-	cout << "Max processors: " << omp_get_num_procs() << endl;
-	cout << "Nested parallelism: " << omp_get_nested() << endl;
 }
 
 void cleanUp()
@@ -400,6 +256,132 @@ void cleanUp()
 			delete organized[i][k];
 }
 
+bool strictCompare(Trip& t1, Trip& t2)
+{
+	return (distanceBetween2(t1.origin, t2.origin) < CLOSE_DISTANCE &&
+		distanceBetween2(t1.destination, t2.destination) < CLOSE_DISTANCE &&
+		t1.perid != t2.perid);
+	//Similar origin and destination, different perid, etc.
+}
+
+bool canShare(vector<int>* t1Vec, Trip& t2)
+{
+	int numPassengers = 0;
+	for (int t1id : *t1Vec)
+	{
+		Trip& t1 = all_trips[t1id];
+		if (!strictCompare(t1, t2))
+			return false;
+		numPassengers += t1.numPassengers;
+	}
+	return(numPassengers <= MaxPeople && numPassengers >= MinPeople);
+}
+
+void shareTrips()
+{
+	for (int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
+	{
+		Trip& t1 = all_trips[t1id];
+		if (t1.actualSharing == NULL)
+		{
+			t1.actualSharing = new vector<int>();
+			t1.actualSharing->push_back(t1id);
+			for (int t2id : t1.potentialSharing)
+			{
+				Trip& t2 = all_trips[t2id];
+				if (canShare(t1.actualSharing, t2))
+				{
+					t1.actualSharing->push_back(t2id);
+					t2.actualSharing = t1.actualSharing;
+				}
+			}
+		}
+	}
+}
+void unshare(Trip& t);
+
+void checkTour(Tour& to)
+{
+	if ((to.doableTripCount / to.trips.size()) < TourDoableRequirement)
+	{
+		for (Trip*& t : to.trips)
+		{
+			unshare(*t);
+		}
+	}
+}
+void checkTours()
+{
+	for (int i = 0; i < TOUR_FILE_SIZE; i++)
+	{
+		Tour& tour = all_tours[i];
+		for (Trip*& trip : tour.trips)
+		{
+			if (trip->actualSharing->size() > 1 || DoableTripModes[trip->mode])
+			{
+				tour.doableTripCount++;
+			}
+		}
+	}
+
+	for (int i = 0; i < TOUR_FILE_SIZE; i++)
+	{
+		Tour& tour = all_tours[i];
+		checkTour(tour);
+	}
+}
+
+void unshare(Trip& t1)
+{
+	if (t1.actualSharing != NULL)	//If trip has a sharing list (orphaned trips do not)
+	{
+		int size = t1.actualSharing->size();	//Size of its list (self included)
+		if (size > 2) //If remaining trips can still share
+		{
+			remove(*t1.actualSharing, t1.id);
+		}
+		else if (size == 2)	//If trip will be orphaned
+		{
+			remove(*t1.actualSharing, t1.id);
+			Trip& t2 = all_trips[t1.actualSharing->at(0)];
+			t2.actualSharing = NULL;
+		}
+		else if (size < 1)
+		{
+			cout << "Trip with non-null empty actualSharing!" << endl;
+		}
+	}
+
+}
+
+void averageSharedTrips()
+{
+	int sharedTrips = 0;
+	int unsharedTrips = 0;
+	int orphanedTrips = 0;
+
+	for (int i = 0; i < TRIP_FILE_SIZE; i++)
+	{
+		Trip& t = all_trips[i];
+		if (t.actualSharing)
+		{
+			if (t.actualSharing->size() > 1)
+				sharedTrips++;
+			else if (t.actualSharing->size() == 1)
+			{
+				unsharedTrips++;
+			}
+		}
+		else
+		{
+			orphanedTrips++;
+		}
+	}
+	cout << sharedTrips << " shared trips" << endl;
+	cout << unsharedTrips << " unshared trips" << endl;
+	cout << orphanedTrips << " orphaned trips" << endl;
+}
+
 void timerWrapper()
 {
 	Timer total("Total");
@@ -413,17 +395,10 @@ void timerWrapper()
 	analyzeTrips();
 
 	shareTrips();
+	checkTours();
+
 	averageSharedTrips();
 
-
-	for (int i = 0; i < 20; i++)
-	{
-		cout << i << ": " << endl;
-		for (int sh : all_trips[i].sharingList)
-		{
-			cout << "  " << sh << endl;
-		}
-	}
 }
 
 

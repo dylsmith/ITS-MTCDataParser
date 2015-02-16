@@ -8,6 +8,10 @@
 
 using namespace std;
 
+void OMPInfo();
+
+void averageSharedTrips();
+
 bool find(vector<short>& v, short val);
 
 void write(string s);

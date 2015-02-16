@@ -8,8 +8,35 @@
 
 #include <iostream>
 #include <map>
+#include <omp.h>
 
 using namespace std;
+
+/*
+void averageSharedTrips()
+{
+	Timer ti("Counting average number of shared trips");
+	long int totalshared = 0;
+	long double milesSaved = 0;
+	long int ridesSaved = 0;
+	for (int i = 0; i < TRIP_FILE_SIZE; i++)
+	{
+		int driversSaved = all_trips[i].actualSharing.size();
+		totalshared += driversSaved;
+		milesSaved += (double)driversSaved * distanceBetween2(all_trips[i].origin, all_trips[i].destination);
+	}
+
+
+	cout << "Each trip was actually shared with an average of " << (double)totalshared / TRIP_FILE_SIZE << " other trips." << endl;
+	cout << "Saved " << milesSaved << " vehicle miles." << endl;
+}*/
+
+void OMPInfo()
+{
+	cout << "Max threads: " << omp_get_max_threads() << endl;
+	cout << "Max processors: " << omp_get_num_procs() << endl;
+	cout << "Nested parallelism: " << omp_get_nested() << endl;
+}
 
 bool find(vector<short>& v, short val)
 {

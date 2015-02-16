@@ -28,6 +28,7 @@ const static string TRIP_FILE = "D:\\Farzad\\ridesharing\\sample data\\indivTrip
 //const static string TRIP_FILE = "I:\\indivTripData_3.csv";
 const static int TRIP_FILE_SIZE = 22811684;//22811684
 
+static float TourDoableRequirement = 0.5;	//For some legs of a tour to be shared, at least this percent must be doable 
 
 //Sharing algorithm variables:
 static int MinPeople = 2;
@@ -67,10 +68,14 @@ static vector<Trip*>* organized[24][NUM_LOCATIONS + 1];
 static float* dist;
 
 
+
 #define NOT_SHAREABLE 0
 #define SHAREABLE 1
 #define UNKNOWN -1
 #define BEING_SHARED 2
+#define SOLO 3
+#define FOLLOWER 4
+#define LEADER 5
 
 
 #endif

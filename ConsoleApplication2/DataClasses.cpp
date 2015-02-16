@@ -17,7 +17,7 @@ double distanceBetween(int origin, int destination)
 
 Trip::Trip()
 {
-	sharingList.reserve(4);
+	potentialSharing.reserve(4);
 	shareable = UNKNOWN;
 }
 
@@ -26,6 +26,7 @@ Trip::Trip()
 Tour::Tour()
 {
 	trips.reserve(5);
+	doableTripCount = 0;
 }
 
 Person::Person()
