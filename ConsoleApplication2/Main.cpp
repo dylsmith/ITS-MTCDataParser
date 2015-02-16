@@ -229,7 +229,7 @@ void analyzeTrips()
 			}
 		}
 	}
-	cout << "Each trip could share with " << (((long double)sharedtrips / TRIP_FILE_SIZE)) << " other trips, on average." << endl;
+	cout << "Each trip could potentially share with " << (((long double)sharedtrips / TRIP_FILE_SIZE)) << " other trips, on average." << endl;
 }
 
 void reserveSpace()
@@ -285,6 +285,7 @@ void shareTrips()
 {
 	Timer ti("Sharing trips");
 	int count = 0;
+	int sharedTrips = 0;
 	//int tenths = TRIP_FILE_SIZE / 100;
 	for (int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
 	{
@@ -307,7 +308,9 @@ void shareTrips()
 				}
 			}
 		}
+		sharedTrips += t1.actualSharing->size() - 1;
 	}
+	cout << "Each trip could actually share with " << (((long double)sharedTrips / TRIP_FILE_SIZE)) << " other trips, on average." << endl;
 }
 
 void shareTrips2()
@@ -373,12 +376,12 @@ void checkTours()
 		}
 	}
 
-	/*
+	
 	for (int i = 0; i < TOUR_FILE_SIZE; i++)
 	{
 		Tour& tour = all_tours[i];
 		checkTour(tour);
-	}*/
+	}
 }
 
 void unshare(Trip& t1)
