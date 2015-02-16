@@ -17,6 +17,7 @@ double distanceBetween(int origin, int destination)
 
 Trip::Trip()
 {
+	actualSharing = NULL;
 	potentialSharing.reserve(4);
 	shareable = UNKNOWN;
 }

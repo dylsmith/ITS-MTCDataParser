@@ -53,10 +53,10 @@ void parseClosePoints()
 	//Check non-diagonal points where k > i. Graph is symmetric, so we don't need to check k < i
 	for (int i = 1; i <= NUM_LOCATIONS; i++)
 	{
+		closePoints[i].push_back(i);
 		for (int k = i + 1; k <= NUM_LOCATIONS; k++)
 		{
 
-			closePoints[i].push_back(i);
 			if (distanceBetween2(i, k) < CLOSE_DISTANCE)
 			{
 				closePoints[i].push_back(k);
@@ -172,9 +172,10 @@ void parseTrips()
 		trip.mode = q.parseInt();
 		all_trips[i].id = i;
 
-
 		if (trip.isShareable())
+		{
 			organized[trip.hour][trip.origin][trip.destination].push_back(&all_trips[i]);
+		}
 
 		all_people[trip.perid].tours[trip.tourid]->trips.push_back(&all_trips[i]);
 	}
@@ -201,9 +202,9 @@ void analyzeTrips()
 	long long int total = 0;
 	for (int hour = 0; hour < 24; hour++)
 	{
-		for (int origin = 1; origin <= NUM_LOCATIONS; origin++)
+		for (int origin = 1; origin <= 12; origin++)
 		{
-			for (int destination = 1; destination <= NUM_LOCATIONS; destination++)
+			for (int destination = 1; destination <= 12; destination++)
 			{
 				for (Trip* trip1 : organized[hour][origin][destination])
 				{
@@ -228,7 +229,7 @@ void analyzeTrips()
 			}
 		}
 	}
-	cout << (((long double)sharedtrips / TRIP_FILE_SIZE) * 100) << "% of trips were shared." << endl;
+	cout << "Each trip could share with " << (((long double)sharedtrips / TRIP_FILE_SIZE)) << " other trips, on average." << endl;
 }
 
 void reserveSpace()
@@ -271,9 +272,12 @@ bool canShare(vector<int>* t1Vec, Trip& t2)
 	{
 		Trip& t1 = all_trips[t1id];
 		if (!strictCompare(t1, t2))
+		{
 			return false;
+		}
 		numPassengers += t1.numPassengers;
 	}
+	numPassengers += t2.numPassengers;
 	return(numPassengers <= MaxPeople && numPassengers >= MinPeople);
 }
 
@@ -281,11 +285,13 @@ void shareTrips()
 {
 	Timer ti("Sharing trips");
 	int count = 0;
-	int tenths = TRIP_FILE_SIZE / 100;
+	//int tenths = TRIP_FILE_SIZE / 100;
 	for (int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
 	{
 
-		if (count++ % tenths == 0) write("Sharing trips " + to_string((double)count / TRIP_FILE_SIZE));
+		//if ((count++ % tenths) == 0) 
+		//	write("Sharing trips " + to_string((double)count / TRIP_FILE_SIZE));
+
 		Trip& t1 = all_trips[t1id];
 		if (t1.actualSharing == NULL)
 		{
@@ -354,26 +360,25 @@ void checkTours()
 {
 	Timer ti("Checking Tours");
 	int count = 0;
-	int tenths = TOUR_FILE_SIZE / 100;
+	//int tenths = TOUR_FILE_SIZE / 100;
 	for (int i = 0; i < TOUR_FILE_SIZE; i++)
 	{
-		if (count++ % tenths == 0) write("Checking tours " + to_string((double)count / TOUR_FILE_SIZE));
+		//if (count++ % tenths == 0) write("Checking tours " + to_string((double)count / TOUR_FILE_SIZE));
 
 		Tour& tour = all_tours[i];
 		for (Trip*& trip : tour.trips)
 		{
 			if (trip->actualSharing->size() > 1 || DoableTripModes[trip->mode])
-			{
 				tour.doableTripCount++;
-			}
 		}
 	}
 
+	/*
 	for (int i = 0; i < TOUR_FILE_SIZE; i++)
 	{
 		Tour& tour = all_tours[i];
 		checkTour(tour);
-	}
+	}*/
 }
 
 void unshare(Trip& t1)
@@ -434,6 +439,7 @@ void timerWrapper()
 	reserveSpace();
 
 	parseClosePoints();
+
 	parsePeople();
 	parseTours();
 	parseTrips();
