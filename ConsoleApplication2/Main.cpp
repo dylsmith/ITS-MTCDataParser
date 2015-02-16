@@ -202,9 +202,11 @@ void removeTrip(Trip& trip)
 void shareTrips()
 {
 	Timer ti("Sharing trips");
+	cout << "Sharing trips: ";
 	for (int tripNum = 0; tripNum < TRIP_FILE_SIZE; tripNum++)
 	{
-		if (tripNum % 1000000 == 0) write("Shairng trips: " + to_string((long double)tripNum / TRIP_FILE_SIZE * 100) + "%\n");
+		if (tripNum % 1000000 == 0) 
+			write((long double)tripNum / TRIP_FILE_SIZE * 100);
 		//if (tripNum % 1000000 == 0) cout << "Sharing trips: " << (long double)tripNum / TRIP_FILE_SIZE * 100 << "%" << endl;
 		Trip& trip = all_trips[tripNum];
 		if (trip.shareable != BEING_SHARED)
@@ -225,33 +227,34 @@ void shareTrips()
 			//for (int i : trip.sharingList) cout << "  " << i << endl;
 			while (trip.sharingList.size() > 0)
 			{
-				//int nextTripNum = fastrand() % trip.sharingList.size();
-				Trip& nextTrip = all_trips[trip.sharingList[fastrand() % trip.sharingList.size()]];
-				if (nextTrip.shareable != BEING_SHARED && trip.numPassengers + nextTrip.numPassengers <= MaxPeople)
-				{
-					//removeTrip(nextTrip);	//Removes this trip from every trip that thinks it can share with it
-					trip.actualSharing.push_back(nextTrip.id);
-					trip.shareable = BEING_SHARED;
-					nextTrip.shareable = BEING_SHARED;
-					//nextTrip.actualSharing.push_back(trip.id);
-					trip.numPassengers += nextTrip.numPassengers;
+			//int nextTripNum = fastrand() % trip.sharingList.size();
+			Trip& nextTrip = all_trips[trip.sharingList[fastrand() % trip.sharingList.size()]];
+			if (nextTrip.shareable != BEING_SHARED && trip.numPassengers + nextTrip.numPassengers <= MaxPeople)
+			{
+			//removeTrip(nextTrip);	//Removes this trip from every trip that thinks it can share with it
+			trip.actualSharing.push_back(nextTrip.id);
+			trip.shareable = BEING_SHARED;
+			nextTrip.shareable = BEING_SHARED;
+			//nextTrip.actualSharing.push_back(trip.id);
+			trip.numPassengers += nextTrip.numPassengers;
 
 
-				}
-				remove(trip.sharingList, nextTrip.id);*/
+			}
+			remove(trip.sharingList, nextTrip.id);*/
 
-				/*
-				else
-				{
-				//cout << "Removing " << tripNum << " from " << nextTrip.id << endl;
-				//for (int j : nextTrip.sharingList) cout << j << " "; cout << endl;
-				//remove(nextTrip.sharingList, tripNum);
-				//cout << "Removing " << nextTrip.id << " from " << tripNum << endl;
-				remove(trip.sharingList, nextTrip.id);
-				}*/
-			//}
+/*
+else
+{
+//cout << "Removing " << tripNum << " from " << nextTrip.id << endl;
+//for (int j : nextTrip.sharingList) cout << j << " "; cout << endl;
+//remove(nextTrip.sharingList, tripNum);
+//cout << "Removing " << nextTrip.id << " from " << tripNum << endl;
+remove(trip.sharingList, nextTrip.id);
+}*/
+//}
 		}
 	}
+	cout << endl;
 }
 
 void checkTours()
@@ -272,7 +275,7 @@ void checkTours()
 
 inline bool compareTrips(Trip& trip1, Trip& trip2)
 {
-	return (trip1.perid != trip2.perid 
+	return (trip1.perid != trip2.perid
 		//find(closePoints[trip1.destination].begin(), closePoints[trip1.destination].end(), trip2.destination) != closePoints[trip1.destination].end()
 		);
 }
@@ -280,33 +283,33 @@ inline bool compareTrips(Trip& trip1, Trip& trip2)
 /*
 void analyzeTrips()
 {
-	Timer ct("Comparing trips");
+Timer ct("Comparing trips");
 
-	long int sharedtrips = 0;
-	long long int total = 0;
-	for (int hour = 0; hour < 24; hour++)
-	{
-		for (int origin = 1; origin <= NUM_LOCATIONS; origin++)
-		{
-			for (Trip* trip1 : organized[hour][origin])
-			{
-				for (int closePoint : closePoints[origin])
-				{
-					for (Trip* trip2 : organized[hour][closePoint])
-					{
-						if (++total % 100000000 == 0) cout << (double)origin / NUM_LOCATIONS << ": " << total << endl;
-						if (compareTrips(*trip1, *trip2))
-						{
-							trip1->sharingList.push_back(trip2->id);
-							sharedtrips++;
-						}
-					}
-				}
-			}
-		}
-	}
+long int sharedtrips = 0;
+long long int total = 0;
+for (int hour = 0; hour < 24; hour++)
+{
+for (int origin = 1; origin <= NUM_LOCATIONS; origin++)
+{
+for (Trip* trip1 : organized[hour][origin])
+{
+for (int closePoint : closePoints[origin])
+{
+for (Trip* trip2 : organized[hour][closePoint])
+{
+if (++total % 100000000 == 0) cout << (double)origin / NUM_LOCATIONS << ": " << total << endl;
+if (compareTrips(*trip1, *trip2))
+{
+trip1->sharingList.push_back(trip2->id);
+sharedtrips++;
+}
+}
+}
+}
+}
+}
 
-	cout << (((long double)sharedtrips / TRIP_FILE_SIZE) * 100) << "% of trips were shared." << endl;
+cout << (((long double)sharedtrips / TRIP_FILE_SIZE) * 100) << "% of trips were shared." << endl;
 }*/
 
 void analyzeTrips()
@@ -315,12 +318,18 @@ void analyzeTrips()
 
 	long long int sharedtrips = 0;
 	long long int total = 0;
+	cout << "Comparing trips: ";
+	int percentDone = 1;
+	int pairsdone = 1;
 	for (int hour = 0; hour < 24; hour++)
 	{
 		for (int origin = 1; origin <= NUM_LOCATIONS; origin++)
 		{
 			for (int destination = 1; destination <= NUM_LOCATIONS; destination++)
-			{
+			{ 
+				if (pairsdone++ == 21141.16)
+					write((percentDone)++);
+
 				for (Trip* trip1 : organized[hour][origin][destination])
 				{
 					for (int closeOrigin : closePoints[origin])
@@ -329,8 +338,8 @@ void analyzeTrips()
 						{
 							for (Trip* trip2 : organized[hour][closeOrigin][closeDestination])
 							{
-								if (++total % 100000000 == 0)
-									write("Comparing trips: " + to_string((((double)origin + (NUM_LOCATIONS * hour)) / (NUM_LOCATIONS * 24)) * 100) + "%\n");
+								if (++total % 500000000 == 0)
+									write((((double)origin + (NUM_LOCATIONS * hour)) / (NUM_LOCATIONS * 24)) * 100);
 								//if (++total % 100000000 == 0) cout << "Comparing trips: " << (((double)origin + (NUM_LOCATIONS * hour)) / (NUM_LOCATIONS * 24)) * 100 << "%" << endl;
 								if (compareTrips(*trip1, *trip2))
 								{
@@ -346,7 +355,7 @@ void analyzeTrips()
 			}
 		}
 	}
-
+	cout << endl;
 	cout << (((long double)sharedtrips / TRIP_FILE_SIZE) * 100) << "% of trips were shared." << endl;
 }
 
@@ -390,11 +399,11 @@ void OMPInfo()
 void cleanUp()
 {
 	free((void*)close);
-	delete[] dist;
-	delete[] all_people;
-	delete[] all_tours;
-	delete[] all_trips;
-	delete[] closePoints;
+	//delete[] dist;
+	//delete[] all_people;
+	//delete[] all_tours;
+	//delete[] all_trips;
+	//delete[] closePoints;
 	for (int i = 0; i < 24; i++)
 		for (int k = 1; k <= NUM_LOCATIONS; k++)
 			delete organized[i][k];
@@ -424,6 +433,8 @@ void timerWrapper()
 			cout << "  " << sh << endl;
 		}
 	}
+
+	cleanUp();
 }
 
 
