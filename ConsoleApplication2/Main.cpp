@@ -348,6 +348,8 @@ void unshare(Trip& t);
 
 void checkTour(Tour& to)
 {
+	cout << "Checking tour " << to.hhid << endl;
+	cout << to.trips.size() << endl;
 	if ((to.doableTripCount / to.trips.size()) < TourDoableRequirement)
 	{
 		for (Trip*& t : to.trips)
@@ -373,12 +375,12 @@ void checkTours()
 		}
 	}
 
-	/*
+	
 	for (int i = 0; i < TOUR_FILE_SIZE; i++)
 	{
 		Tour& tour = all_tours[i];
 		checkTour(tour);
-	}*/
+	}
 }
 
 void unshare(Trip& t1)

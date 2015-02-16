@@ -29,7 +29,7 @@ const static int TOUR_FILE_SIZE = 5;//8914778
 //const static string TRIP_FILE = "D:\\Farzad\\ridesharing\\sample data\\indivTripData_3.csv";
 //const static string TRIP_FILE = "C:\\ITS\\indivTripData_3.csv";
 const static string TRIP_FILE = "C:\\ITS\\tripTest.csv";
-const static int TRIP_FILE_SIZE = 4;//22811684
+const static int TRIP_FILE_SIZE = 5;//22811684
 
 static float TourDoableRequirement = 0.5;	//For some legs of a tour to be shared, at least this percent must be doable 
 
