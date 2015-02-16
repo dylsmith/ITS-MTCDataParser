@@ -246,11 +246,11 @@ void reserveSpace()
 void cleanUp()
 {
 	free((void*)close);
-	delete[] dist;
-	delete[] all_people;
-	delete[] all_tours;
-	delete[] all_trips;
-	delete[] closePoints;
+	//delete[] dist;
+	//delete[] all_people;
+	//delete[] all_tours;
+	//delete[] all_trips;
+	//delete[] closePoints;
 	for (int i = 0; i < 24; i++)
 		for (int k = 1; k <= NUM_LOCATIONS; k++)
 			delete organized[i][k];
@@ -279,8 +279,13 @@ bool canShare(vector<int>* t1Vec, Trip& t2)
 
 void shareTrips()
 {
+	Timer ti("Sharing trips");
+	int count = 0;
+	int tenths = TRIP_FILE_SIZE / 100;
 	for (int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
 	{
+
+		if (count++ % tenths == 0) write("Sharing trips " + to_string((double)count / TRIP_FILE_SIZE));
 		Trip& t1 = all_trips[t1id];
 		if (t1.actualSharing == NULL)
 		{
@@ -298,6 +303,41 @@ void shareTrips()
 		}
 	}
 }
+
+void shareTrips2()
+{
+	for (int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
+	{
+		Trip& t1 = all_trips[t1id];
+		if (t1.actualSharing == NULL)
+		{
+			for (int t2id : t1.potentialSharing)
+			{
+				Trip& t2 = all_trips[t2id];
+				if (t2.actualSharing != NULL)
+				{
+					if (canShare(t2.actualSharing, t1))
+					{
+						t1.actualSharing = t2.actualSharing;
+						t1.actualSharing->push_back(t1id);
+						return;
+					}
+				}
+				else
+				{
+					t1.actualSharing = new vector<int>();
+					t2.actualSharing = t1.actualSharing;
+					t1.actualSharing->push_back(t1id);
+					t1.actualSharing->push_back(t2id);
+					return;
+				}
+			}
+			t1.actualSharing = new vector<int>();
+			t1.actualSharing->push_back(t1id);
+		}
+	}
+
+}
 void unshare(Trip& t);
 
 void checkTour(Tour& to)
@@ -312,8 +352,13 @@ void checkTour(Tour& to)
 }
 void checkTours()
 {
+	Timer ti("Checking Tours");
+	int count = 0;
+	int tenths = TOUR_FILE_SIZE / 100;
 	for (int i = 0; i < TOUR_FILE_SIZE; i++)
 	{
+		if (count++ % tenths == 0) write("Checking tours " + to_string((double)count / TOUR_FILE_SIZE));
+
 		Tour& tour = all_tours[i];
 		for (Trip*& trip : tour.trips)
 		{
