@@ -9,6 +9,8 @@
 
 using namespace std;
 
+
+//Count the number of files automatically
 const static double CLOSE_DISTANCE = 2.5;	//Two points must be within this to be considered closePoints. Make sure to update vector reserve() calls when changing this
 const static int NUM_LOCATIONS = 1454;		//Number of locations in the simulation
 
@@ -45,11 +47,11 @@ static int DoableTripModes[] = {0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 //TourRandomFailChance
 //Trip sharing requirements:  (ordered by computational complexity)
 
-static int MinNumStops = 2; //Number of stops must be this or more
+static int MaxNumStops = 6; //Number of stops must be this or more
 
 static int MaxIncome = 200000;						//Income must be below this
 
-static float MinDistanceTraveled = 0.0;				//Distance between origin and dest. must be above this
+static float MinDistanceTraveled = 1.0;				//Distance between origin and dest. must be above this
 
 static int TripModes[] = { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };//1 represents that array index is shareable. Right now, indexes modes 1-7 (and not 0) are shareable
 													
