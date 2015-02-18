@@ -445,6 +445,19 @@ void timerWrapper()
 	parsePeople();
 	parseTours();
 	parseTrips();
+
+	for (int i = 1; i <= PERSON_FILE_SIZE; i++)
+	{
+		cout << all_people[i].id << endl;
+		for (auto to : all_people[i].tours)
+		{
+			auto* t = to.second;
+			cout << "  " << t->id << endl;
+			for (Trip* tr : t->trips)
+				cout << "    " << tr->id << endl;
+		}
+	}
+
 	analyzeTrips();
 
 	shareTrips();
