@@ -9,27 +9,29 @@
 
 using namespace std;
 
+
+//Count the number of files automatically
 const static double CLOSE_DISTANCE = 2.5;	//Two points must be within this to be considered closePoints. Make sure to update vector reserve() calls when changing this
 const static int NUM_LOCATIONS = 1454;		//Number of locations in the simulation
 
-//const static string DISTANCE_FILE = "D:\\Farzad\\ridesharing\\sample data\\DistanceSkimsDatabaseAM.csv";
-const static string DISTANCE_FILE = "C:\\ITS\\DistanceSkimsDatabaseAM.csv";
+const static string DISTANCE_FILE = "D:\\Farzad\\ridesharing\\sample data\\DistanceSkimsDatabaseAM.csv";
+//const static string DISTANCE_FILE = "C:\\ITS\\DistanceSkimsDatabaseAM.csv";
 const static int DISTANCE_FILE_SIZE = NUM_LOCATIONS * NUM_LOCATIONS;
 
-//const static string PERSON_FILE = "D:\\Farzad\\ridesharing\\sample data\\personFile.p2011s3a.2010.csv";
+const static string PERSON_FILE = "D:\\Farzad\\ridesharing\\sample data\\personFile.p2011s3a.2010.csv";
 //const static string PERSON_FILE = "C:\\ITS\\personFile.p2011s3a.2010.csv";
-const static string PERSON_FILE = "C:\\ITS\\peopleTest.csv";
-const static int PERSON_FILE_SIZE = 5;//7053334
+//const static string PERSON_FILE = "C:\\ITS\\peopleTest.csv";
+const static int PERSON_FILE_SIZE = 7053334;//7053334
 
-//const static string TOUR_FILE = "D:\\Farzad\\ridesharing\\sample data\\indivTourData_3.csv";
+const static string TOUR_FILE = "D:\\Farzad\\ridesharing\\sample data\\indivTourData_3.csv";
 //const static string TOUR_FILE = "C:\\ITS\\indivTourData_3.csv";
-const static string TOUR_FILE = "C:\\ITS\\tourTest.csv";
-const static int TOUR_FILE_SIZE = 5;//8914778
+//const static string TOUR_FILE = "C:\\ITS\\tourTest.csv";
+const static int TOUR_FILE_SIZE = 8914778;//8914778
 
-//const static string TRIP_FILE = "D:\\Farzad\\ridesharing\\sample data\\indivTripData_3.csv";
+const static string TRIP_FILE = "D:\\Farzad\\ridesharing\\sample data\\indivTripData_3.csv";
 //const static string TRIP_FILE = "C:\\ITS\\indivTripData_3.csv";
-const static string TRIP_FILE = "C:\\ITS\\tripTest.csv";
-const static int TRIP_FILE_SIZE = 5;//22811684
+//const static string TRIP_FILE = "C:\\ITS\\tripTest.csv";
+const static int TRIP_FILE_SIZE = 22811684;//22811684
 
 static float TourDoableRequirement = 0.5;	//For some legs of a tour to be shared, at least this percent must be doable 
 
@@ -45,11 +47,11 @@ static int DoableTripModes[] = {0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 //TourRandomFailChance
 //Trip sharing requirements:  (ordered by computational complexity)
 
-static int MinNumStops = 2; //Number of stops must be this or more
+static int MaxNumStops = 6; //Number of stops must be this or more
 
 static int MaxIncome = 200000;						//Income must be below this
 
-static float MinDistanceTraveled = 0.0;				//Distance between origin and dest. must be above this
+static float MinDistanceTraveled = 1.0;				//Distance between origin and dest. must be above this
 
 static int TripModes[] = { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };//1 represents that array index is shareable. Right now, indexes modes 1-7 (and not 0) are shareable
 													

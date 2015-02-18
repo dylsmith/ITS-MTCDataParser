@@ -23,7 +23,7 @@ bool Trip::isShareable()
 
 	if (shareable == UNKNOWN)
 		shareable = (
-		all_people[perid].tours[tourid]->numStops >= MinNumStops &&		//Number of stops
+		all_people[perid].tours[tourid]->numStops <= MaxNumStops &&		//Number of stops
 		distanceBetween2(origin, destination) > MinDistanceTraveled &&	//Trip length
 		all_people[perid].income < MaxIncome &&							//Income level
 		TripModes[mode] == 1 &&											//Mode is valid check  (array index of the mode must be 1)
@@ -136,7 +136,7 @@ void parseTrips()
 	Timer timeit("Parsing trips");
 
 
-	for (int i = 0; i < 24; i++)
+	for (int i = 5; i < 24; i++)
 	{
 		//organized[i] = new vector<Trip*>[NUM_LOCATIONS + 1];
 		for (int k = 1; k <= NUM_LOCATIONS; k++)
@@ -200,7 +200,7 @@ void analyzeTrips()
 
 	long long int sharedtrips = 0;
 	long long int total = 0;
-	for (int hour = 0; hour < 24; hour++)
+	for (int hour = 5; hour < 24; hour++)
 	{
 		for (int origin = 1; origin <= 12; origin++)
 		{
@@ -215,7 +215,7 @@ void analyzeTrips()
 							for (Trip* trip2 : organized[hour][closeOrigin][closeDestination])
 							{
 								if (++total % 100000000 == 0)
-									write("Comparing trips: " + to_string((((double)origin + (NUM_LOCATIONS * hour)) / (NUM_LOCATIONS * 24)) * 100) + "%\n");
+									write("Comparing trips: " + to_string((((double)origin + (NUM_LOCATIONS * hour) - (NUM_LOCATIONS * 5)) / (NUM_LOCATIONS * 19)) * 100) + "%\n");
 								//if (++total % 100000000 == 0) cout << "Comparing trips: " << (((double)origin + (NUM_LOCATIONS * hour)) / (NUM_LOCATIONS * 24)) * 100 << "%" << endl;
 								if (compareTrips(*trip1, *trip2))
 								{
@@ -229,7 +229,7 @@ void analyzeTrips()
 			}
 		}
 	}
-	cout << "Each trip could share with " << (((long double)sharedtrips / TRIP_FILE_SIZE)) << " other trips, on average." << endl;
+	cout << "Each trip could potentially share with " << (((long double)sharedtrips / TRIP_FILE_SIZE)) << " other trips, on average." << endl;
 }
 
 void reserveSpace()
@@ -278,13 +278,19 @@ bool canShare(vector<int>* t1Vec, Trip& t2)
 		numPassengers += t1.numPassengers;
 	}
 	numPassengers += t2.numPassengers;
-	return(numPassengers <= MaxPeople && numPassengers >= MinPeople);
+	//For minimum, check if there are dangling trips and add them to one of the other trip sets
+	//min: trpis of at least some min
+	//max: trips of at most some max
+	
+	//modify this to split at the end
+	return(numPassengers <= MaxPeople && numPassengers >= MinPeople);	//Move this check to after trip set generation
 }
 
 void shareTrips()
 {
 	Timer ti("Sharing trips");
 	int count = 0;
+	int sharedTrips = 0;
 	//int tenths = TRIP_FILE_SIZE / 100;
 	for (int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
 	{
@@ -293,7 +299,7 @@ void shareTrips()
 		//	write("Sharing trips " + to_string((double)count / TRIP_FILE_SIZE));
 
 		Trip& t1 = all_trips[t1id];
-		if (t1.actualSharing == NULL)
+		if (t1.actualSharing == NULL)	//Change thsi to only check people who can drive. Don't add other drivers just yet. Once all drivers have tried to share, repeat, but adding drivers. Minimize/maxiimize number of passangers here
 		{
 			t1.actualSharing = new vector<int>();
 			t1.actualSharing->push_back(t1id);
@@ -307,7 +313,9 @@ void shareTrips()
 				}
 			}
 		}
+		sharedTrips += t1.actualSharing->size() - 1;
 	}
+	cout << "Each trip could actually share with " << (((long double)sharedTrips / TRIP_FILE_SIZE)) << " other trips, on average." << endl;
 }
 
 void shareTrips2()
@@ -348,13 +356,16 @@ void unshare(Trip& t);
 
 void checkTour(Tour& to)
 {
-	cout << "Checking tour " << to.hhid << endl;
-	cout << to.trips.size() << endl;
-	if ((to.doableTripCount / to.trips.size()) < TourDoableRequirement)
+	//cout << "Checking tour " << to.hhid << endl;
+	//cout << to.trips.size() << endl;
+	if (to.trips.size() > 0)
 	{
-		for (Trip*& t : to.trips)
+		if ((to.doableTripCount / to.trips.size()) < TourDoableRequirement)
 		{
-			unshare(*t);
+			for (Trip*& t : to.trips)
+			{
+				unshare(*t);
+			}
 		}
 	}
 }
@@ -383,26 +394,39 @@ void checkTours()
 	}
 }
 
+int totalUnshared = 0;
 void unshare(Trip& t1)
 {
 	if (t1.actualSharing != NULL)	//If trip has a sharing list (orphaned trips do not)
 	{
+		totalUnshared++;
 		int size = t1.actualSharing->size();	//Size of its list (self included)
 		if (size > 2) //If remaining trips can still share
 		{
 			remove(*t1.actualSharing, t1.id);
+
 		}
 		else if (size == 2)	//If trip will be orphaned
 		{
 			remove(*t1.actualSharing, t1.id);
 			Trip& t2 = all_trips[t1.actualSharing->at(0)];
+			if (!DoableTripModes[t2.mode])
+			{
+				Tour& to2 = *all_people[t2.perid].tours[t2.tourid];
+				to2.doableTripCount--;
+				checkTour(to2);
+			}
+		
 			t2.actualSharing = NULL;
+			delete t1.actualSharing;
 		}
 		else if (size < 1)
 		{
 			cout << "Trip with non-null empty actualSharing!" << endl;
 		}
 	}
+	t1.actualSharing = new vector<int>();
+	t1.actualSharing->push_back(t1.id);	//Make sure this trip is not re-shared
 
 }
 
@@ -418,7 +442,9 @@ void averageSharedTrips()
 		if (t.actualSharing)
 		{
 			if (t.actualSharing->size() > 1)
+			{
 				sharedTrips++;
+			}
 			else if (t.actualSharing->size() == 1)
 			{
 				unsharedTrips++;
@@ -444,30 +470,47 @@ void timerWrapper()
 
 	parsePeople();
 	parseTours();
-	parseTrips();
+	parseTrips();	//Count # of unshareable trips
+	analyzeTrips();	
 
-	for (int i = 1; i <= PERSON_FILE_SIZE; i++)
+	
+	int p = 0;
+	for (int i = 0; i < TRIP_FILE_SIZE; i++)
 	{
-		cout << all_people[i].id << endl;
-		for (auto to : all_people[i].tours)
-		{
-			auto* t = to.second;
-			cout << "  " << t->id << endl;
-			for (Trip* tr : t->trips)
-				cout << "    " << tr->id << endl;
-		}
+		Trip& t = all_trips[i];
+		if (t.potentialSharing.size() > 0)
+			p++;
 	}
+	cout << p << " trips could potentially share." << endl;
 
-	analyzeTrips();
-
-	shareTrips();
-	checkTours();
-
+	shareTrips();	//Share all possible trips, split based on max and min later
+	checkTours();	//Loop until 5% or lass are removed (ensure not to add to unshareed trips)
+	cout << totalUnshared << " trips were unshared at tour-level." << endl;
 	averageSharedTrips();
+	//Output a list of each trip and the trips it's actually shared with
+	//output a .csv with all shared drivers' trip info and one with unsharedtrips
+	//output a list of each tour followed by if it's shareable or not
+
+	//calculate the vehicle miles saved, by the nmber of non-drivers whose modes were driving
+
+
+	/*
+	log file:
+		Max or Min
+		# of trips
+		# valid trpis
+		# of trips with nonzero potential sharing
+		# o frips with nonzero actual sharing
+		# of trips removed at tour level
+		# of trips orphaned at tour level
+		# of orphaned trips re-added //this will loop until 5%
+		//VMT reduction 
+
+	*/
 
 }
 
-
+//output: trip (split by sharing and not sharing)
 
 int _tmain(int argc, _TCHAR* argv[])
 {
