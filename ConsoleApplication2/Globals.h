@@ -36,12 +36,14 @@ const static int TRIP_FILE_SIZE = 22811684;//22811684
 static float TourDoableRequirement = 0.5;	//For some legs of a tour to be shared, at least this percent must be doable 
 
 //Sharing algorithm variables:
+static bool Maximize = true;
 static int MinPeople = 2;
 static int MaxPeople = 5;
 
 //Tour requirements
 
-static int DoableTripModes[] = {0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+static int DrivingModes[] =    {0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+static int DoableTripModes[] = {0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0};
 //doable_trip_mode = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13] //must be shareable OR trip mode must be in this
 //TourSharingProportion
 //TourRandomFailChance

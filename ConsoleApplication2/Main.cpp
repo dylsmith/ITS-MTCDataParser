@@ -283,39 +283,33 @@ bool canShare(vector<int>* t1Vec, Trip& t2)
 	//max: trips of at most some max
 	
 	//modify this to split at the end
-	return(numPassengers <= MaxPeople && numPassengers >= MinPeople);	//Move this check to after trip set generation
+	if (Maximize)
+		return(numPassengers <= MaxPeople);	//Move this check to after trip set generation
+	else
+		return(numPassengers >= MinPeople);
 }
 
 void shareTrips()
 {
 	Timer ti("Sharing trips");
-	int count = 0;
-	int sharedTrips = 0;
-	//int tenths = TRIP_FILE_SIZE / 100;
 	for (int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
 	{
-
-		//if ((count++ % tenths) == 0) 
-		//	write("Sharing trips " + to_string((double)count / TRIP_FILE_SIZE));
-
 		Trip& t1 = all_trips[t1id];
-		if (t1.actualSharing == NULL)	//Change thsi to only check people who can drive. Don't add other drivers just yet. Once all drivers have tried to share, repeat, but adding drivers. Minimize/maxiimize number of passangers here
+		if (t1.actualSharing == NULL && DrivingModes[t1.mode])	//Change thsi to only check people who can drive. Don't add other drivers just yet. Once all drivers have tried to share, repeat, but adding drivers. Minimize/maxiimize number of passangers here
 		{
 			t1.actualSharing = new vector<int>();
 			t1.actualSharing->push_back(t1id);
 			for (int t2id : t1.potentialSharing)
 			{
 				Trip& t2 = all_trips[t2id];
-				if (canShare(t1.actualSharing, t2))
+				if (t2.actualSharing == NULL && canShare(t1.actualSharing, t2))
 				{
 					t1.actualSharing->push_back(t2id);
 					t2.actualSharing = t1.actualSharing;
 				}
 			}
 		}
-		sharedTrips += t1.actualSharing->size() - 1;
 	}
-	cout << "Each trip could actually share with " << (((long double)sharedTrips / TRIP_FILE_SIZE)) << " other trips, on average." << endl;
 }
 
 void shareTrips2()
@@ -360,7 +354,7 @@ void checkTour(Tour& to)
 	//cout << to.trips.size() << endl;
 	if (to.trips.size() > 0)
 	{
-		if ((to.doableTripCount / to.trips.size()) < TourDoableRequirement)
+		if (((double)to.doableTripCount / to.trips.size()) < TourDoableRequirement)
 		{
 			for (Trip*& t : to.trips)
 			{
@@ -372,12 +366,8 @@ void checkTour(Tour& to)
 void checkTours()
 {
 	Timer ti("Checking Tours");
-	int count = 0;
-	//int tenths = TOUR_FILE_SIZE / 100;
 	for (int i = 0; i < TOUR_FILE_SIZE; i++)
 	{
-		//if (count++ % tenths == 0) write("Checking tours " + to_string((double)count / TOUR_FILE_SIZE));
-
 		Tour& tour = all_tours[i];
 		for (Trip*& trip : tour.trips)
 		{
@@ -394,6 +384,52 @@ void checkTours()
 	}
 }
 
+void unshare(Trip& t1)
+{
+	int size = t1.actualSharing->size();
+	if (t1.actualSharing != NULL)
+	{
+		if (size > 2)
+		{
+			remove(*t1.actualSharing, t1.id);
+		}
+		else if (size == 2)
+		{
+			remove(*t1.actualSharing, t1.id);
+			Trip& t2 = all_trips[t1.actualSharing->at(0)];
+			delete t1.actualSharing;
+			t2.actualSharing = NULL;
+			for (int t3id : t2.potentialSharing)
+			{
+				Trip& t3 = all_trips[t3id];
+				if (t3.actualSharing != NULL && canShare(t3.actualSharing, t2))
+				{
+					t3.actualSharing->push_back(t2.id);
+					t2.actualSharing = t3.actualSharing;
+				}
+			}
+			if (t2.actualSharing == NULL)
+			{
+				t2.actualSharing = new vector<int>();
+				t2.actualSharing->push_back(t2.id);
+				if (!DoableTripModes[t2.mode])
+				{
+					Tour& to2 = *all_people[t2.perid].tours[t2.tourid];
+					to2.doableTripCount--;
+					checkTour(to2);
+				}
+			}
+		}
+		else //size = 1 or 0
+		{
+			delete t1.actualSharing;
+		}
+		t1.actualSharing = NULL;
+	}
+}
+
+
+/*
 int totalUnshared = 0;
 void unshare(Trip& t1)
 {
@@ -429,12 +465,13 @@ void unshare(Trip& t1)
 	t1.actualSharing->push_back(t1.id);	//Make sure this trip is not re-shared
 
 }
-
-void averageSharedTrips()
+*/
+void postStatistics()
 {
+	int potentialSharedTrips = 0;
 	int sharedTrips = 0;
 	int unsharedTrips = 0;
-	int orphanedTrips = 0;
+	int soloTrips = 0;
 
 	for (int i = 0; i < TRIP_FILE_SIZE; i++)
 	{
@@ -447,17 +484,23 @@ void averageSharedTrips()
 			}
 			else if (t.actualSharing->size() == 1)
 			{
-				unsharedTrips++;
+				soloTrips++;
+			}
+
+			if (t.potentialSharing.size() > 1)
+			{
+				potentialSharedTrips++;
 			}
 		}
 		else
 		{
-			orphanedTrips++;
+			unsharedTrips++;
 		}
 	}
-	cout << sharedTrips << " shared trips" << endl;
+	cout << potentialSharedTrips << " trips could potentially share" << endl;
+	cout << sharedTrips << " trips actually shared" << endl;
+	cout << soloTrips << " solo trips" << endl;
 	cout << unsharedTrips << " unshared trips" << endl;
-	cout << orphanedTrips << " orphaned trips" << endl;
 }
 
 void timerWrapper()
@@ -474,19 +517,11 @@ void timerWrapper()
 	analyzeTrips();	
 
 	
-	int p = 0;
-	for (int i = 0; i < TRIP_FILE_SIZE; i++)
-	{
-		Trip& t = all_trips[i];
-		if (t.potentialSharing.size() > 0)
-			p++;
-	}
-	cout << p << " trips could potentially share." << endl;
+
 
 	shareTrips();	//Share all possible trips, split based on max and min later
 	checkTours();	//Loop until 5% or lass are removed (ensure not to add to unshareed trips)
-	cout << totalUnshared << " trips were unshared at tour-level." << endl;
-	averageSharedTrips();
+	postStatistics();
 	//Output a list of each trip and the trips it's actually shared with
 	//output a .csv with all shared drivers' trip info and one with unsharedtrips
 	//output a list of each tour followed by if it's shareable or not
