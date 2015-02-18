@@ -371,7 +371,7 @@ void checkTours()
 		Tour& tour = all_tours[i];
 		for (Trip*& trip : tour.trips)
 		{
-			if (trip->actualSharing->size() > 1 || DoableTripModes[trip->mode])
+			if (trip->actualSharing != NULL && trip->actualSharing->size() > 1 || DoableTripModes[trip->mode])
 				tour.doableTripCount++;
 		}
 	}
