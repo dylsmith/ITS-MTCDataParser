@@ -254,7 +254,7 @@ bool strictCompare(Trip& t1, Trip& t2)
 	//Similar origin and destination, different perid, etc.
 }
 
-bool canShare(vector<int>* t1Vec, Trip& t2)
+bool canShare(unordered_set<int>* t1Vec, Trip& t2)
 {
 	int numPassengers = 0;
 	for (int t1id : *t1Vec)
@@ -282,14 +282,14 @@ void shareTrips()
 		Trip& t1 = all_trips[t1id];
 		if (t1.actualSharing == NULL && DrivingModes[t1.mode])	//Change thsi to only check people who can drive. Don't add other drivers just yet. Once all drivers have tried to share, repeat, but adding drivers. Minimize/maxiimize number of passangers here
 		{
-			t1.actualSharing = new vector<int>();
-			t1.actualSharing->push_back(t1id);
+			t1.actualSharing = new unordered_set<int>();
+			t1.actualSharing->insert(t1id);
 			for (int t2id : t1.potentialSharing)
 			{
 				Trip& t2 = all_trips[t2id];
 				if (t2.actualSharing == NULL && canShare(t1.actualSharing, t2))
 				{
-					t1.actualSharing->push_back(t2id);
+					t1.actualSharing->insert(t2id);
 					t2.actualSharing = t1.actualSharing;
 				}
 			}
@@ -461,15 +461,17 @@ void unshare(Trip& t1)
 {
 	if (t1.actualSharing != NULL)
 	{
-		remove(*t1.actualSharing, t1.id);
-		if (t1.actualSharing->size() == 0)
+		if (t1.actualSharing->size() == 1)
 		{
 			delete t1.actualSharing;
 			t1.actualSharing = NULL;
 		}
-		else if (t1.actualSharing->size() == 1)
+		else if (t1.actualSharing->size() == 2)
 		{
-			Trip& t2 = all_trips[t1.actualSharing->at(0)];
+			//remove(*t1.actualSharing, t1.id);
+			t1.actualSharing->erase(t1.id);
+			//Trip& t2 = all_trips[t1.actualSharing->at(0)];
+			Trip& t2 = all_trips[*t1.actualSharing->begin()];
 			orphanedTrips.insert(t2.id);
 			delete t1.actualSharing;
 			t1.actualSharing = NULL;
@@ -483,7 +485,8 @@ void unshare(Trip& t1)
 		}
 		else //size > 2
 		{
-			t1.actualSharing = NULL;
+			//remove(*t1.actualSharing, t1.id);
+			t1.actualSharing->erase(t1.id);
 		}
 	}
 }
@@ -501,14 +504,14 @@ void reshare()
 			Trip& t2 = all_trips[t2id];
 			if (t2.actualSharing != NULL && canShare(t2.actualSharing, t1))
 			{
-				t2.actualSharing->push_back(t1.id);
+				t2.actualSharing->insert(t1.id);
 				t1.actualSharing = t2.actualSharing;
 			}
 		}
 		if (t1.actualSharing == NULL)
 		{
-			t1.actualSharing = new vector<int>();
-			t1.actualSharing->push_back(t1.id);
+			t1.actualSharing = new unordered_set<int>();
+			t1.actualSharing->insert(t1.id);
 		}
 	}
 	orphanedTrips.clear();

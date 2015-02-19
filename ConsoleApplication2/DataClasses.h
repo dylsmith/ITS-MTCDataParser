@@ -24,8 +24,8 @@ struct Trip
 	string purpose;
 
 	vector<int> potentialSharing;
-	vector<int>* actualSharing;
-	//unordered_set<int>* actualSharing;
+	//vector<int>* actualSharing;
+	unordered_set<int>* actualSharing;
 
 	int shareable; //1 = yes, 0 = no, -1 = unknown
 
