@@ -20,6 +20,7 @@ Trip::Trip()
 	actualSharing = NULL;
 	potentialSharing.reserve(4);
 	shareable = UNKNOWN;
+	shared = 1;
 }
 
 
