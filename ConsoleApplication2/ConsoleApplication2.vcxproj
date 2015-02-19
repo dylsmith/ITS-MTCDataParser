@@ -172,6 +172,7 @@
   <ItemGroup>
     <ClCompile Include="DataClasses.cpp" />
     <ClCompile Include="FastRand.cpp" />
+    <ClCompile Include="Globals.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="MiscFunctions.cpp" />
     <ClCompile Include="QuickParser.cpp" />

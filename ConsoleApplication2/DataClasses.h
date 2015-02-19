@@ -42,6 +42,7 @@ struct Tour
 	int hhid;
 	int numStops;
 	vector<Trip*> trips;
+	bool shared;
 
 	int doableTripCount;
 

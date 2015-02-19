@@ -169,6 +169,7 @@ void parseTrips()
 		if (trip.isShareable())
 		{
 			organized[trip.hour][trip.origin][trip.destination].push_back(&all_trips[i]);
+			shareable++;
 		}
 
 		all_people[trip.perid].tours[trip.tourid]->trips.push_back(&all_trips[i]);
@@ -340,8 +341,9 @@ void unshare(Trip& t);
 
 void checkTour(Tour& to)
 {
-	if ((to.trips.size() > 0) && (((double)to.doableTripCount / to.trips.size()) < TourDoableRequirement))
+	if (to.shared && (to.trips.size() > 0) && (((double)to.doableTripCount / to.trips.size()) < TourDoableRequirement))
 		{
+			to.shared = 0;
 			for (Trip*& t : to.trips)
 			{
 				unshare(*t);
@@ -359,7 +361,7 @@ void checkTours()
 		Tour& tour = all_tours[i];
 		for (Trip*& trip : tour.trips)
 		{
-			if (trip->actualSharing != NULL && trip->actualSharing->size() > 1 || DoableTripModes[trip->mode])
+			if ((trip->actualSharing != NULL && trip->actualSharing->size() > 1) || DoableTripModes[trip->mode])
 				tour.doableTripCount++;
 		}
 	}
@@ -369,9 +371,7 @@ void checkTours()
 	{
 		if (i % hundr == 0)
 			cout << "Checking tours: " << round((double)i / TOUR_FILE_SIZE * 100) << "%" << endl;
-
-		Tour& tour = all_tours[i];
-		checkTour(tour);
+		checkTour(all_tours[i]);
 	}
 }
 /*
@@ -460,10 +460,14 @@ void unshare(Trip& t1)
 
 }*/
 list<int> orphanedTrips;
+long int unshareCount;
 void unshare(Trip& t1)
 {
 	if (t1.actualSharing != NULL)
 	{
+		if (++unshareCount % 100000 == 0) cout << unshareCount << endl;
+
+		unshared++;
 		if (t1.actualSharing->size() == 1)
 		{
 			delete t1.actualSharing;
@@ -522,11 +526,6 @@ void reshare()
 
 void postStatistics()
 {
-	int potentialSharedTrips = 0;
-	int sharedTrips = 0;
-	int unsharedTrips = 0;
-	int soloTrips = 0;
-
 	for (int i = 0; i < TRIP_FILE_SIZE; i++)
 	{
 		Trip& t = all_trips[i];
@@ -534,27 +533,62 @@ void postStatistics()
 		{
 			if (t.actualSharing->size() > 1)
 			{
-				sharedTrips++;
+				actualSharing++;
+				for (int i : *t.actualSharing)
+				{
+					Trip& t2 = all_trips[i];
+					if (DrivingModes[t2.mode])
+					{
+						VMTReduction += distanceBetween2(t2.origin, t2.destination);
+					}
+				}
 			}
 			else if (t.actualSharing->size() == 1)
 			{
-				soloTrips++;
+				solo++;
 			}
 
 			if (t.potentialSharing.size() > 1)
 			{
-				potentialSharedTrips++;
+				potentialSharing++;
 			}
 		}
 		else
 		{
-			unsharedTrips++;
+			orphaned++;
 		}
 	}
-	cout << potentialSharedTrips << " trips could potentially share" << endl;
-	cout << sharedTrips << " trips actually shared" << endl;
-	cout << soloTrips << " solo trips" << endl;
-	cout << unsharedTrips << " unshared trips" << endl;
+
+	ofstream outf(DATA_FILE);
+	if (Maximize)
+		outf << "Maximizing group size" << endl;
+	else
+		outf << "Minimizing group size" << endl;
+
+	outf << "Total trips: " << TRIP_FILE_SIZE << endl;
+	outf << "Shareable trips: " << shareable << endl;
+	outf << "Trips that can potentially share with at least one other: " << potentialSharing << endl;
+	outf << "Trips that actually shared with at least one other: " << actualSharing << endl;
+	outf << "Trips unshared at tour-level: " << unshared << endl;
+	outf << "Trips that were not shared, but could have been: " << solo << endl;
+	outf << "Orphaned trips: " << orphaned << endl;
+	outf << "Vehicle miles reduction: " << VMTReduction << endl;
+	outf.close();
+}
+
+void tripSharingOutput()
+{
+	Timer ti("Writing trip sharing to file");
+	ofstream outf(TRIP_SHARING_FILE);
+	for(int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
+	{
+		outf << t1id;
+		for (int t2id : *all_trips[t1id].actualSharing)
+		{
+			outf << ',' << t2id;
+		}
+		outf << '\n';
+	}
 }
 
 void timerWrapper()
@@ -567,21 +601,20 @@ void timerWrapper()
 
 	parsePeople();
 	parseTours();
-	parseTrips();	//Count # of unshareable trips
+	parseTrips();	
 	analyzeTrips();	
-
 	
-
 
 	shareTrips();	//Share all possible trips, split based on max and min later
 	checkTours();	//Loop until 5% or lass are removed (ensure not to add to unshareed trips)
 	reshare();
 	postStatistics();
-	//Output a list of each trip and the trips it's actually shared with
-	//output a .csv with all shared drivers' trip info and one with unsharedtrips
-	//output a list of each tour followed by if it's shareable or not
 
-	//calculate the vehicle miles saved, by the nmber of non-drivers whose modes were driving
+	tripSharingOutput(); //Output a list of each trip and the trips it's actually shared with
+
+	//output a .csv with all shared drivers' trip info and one with unsharedtrips
+	//output a list of all shared people
+	//output a list of all trips
 
 
 	/*
@@ -597,6 +630,7 @@ void timerWrapper()
 		//VMT reduction 
 
 	*/
+
 
 }
 

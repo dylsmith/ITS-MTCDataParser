@@ -28,6 +28,7 @@ Tour::Tour()
 {
 	trips.reserve(5);
 	doableTripCount = 0;
+	shared = 1;
 }
 
 Person::Person()

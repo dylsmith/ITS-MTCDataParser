@@ -113,11 +113,12 @@ void charsinfile()
 int lineCount(string filename)
 {
 	QuickParser q(filename);
-	Timer c("Counting lines in " + filename);
+	Timer c(" lines in " + filename);
 	int lines = 0;
 	for (int i = 0; i < q.length; i++)
 		if (*(q.file + i) == '\n')
 			lines++;
+	cout << lines;
 	return lines;
 }
 
