@@ -386,12 +386,14 @@ void checkTours()
 
 void unshare(Trip& t1)
 {
-	int size = t1.actualSharing->size();
+
 	if (t1.actualSharing != NULL)
 	{
+		int size = t1.actualSharing->size();
 		if (size > 2)
 		{
 			remove(*t1.actualSharing, t1.id);
+			t1.actualSharing = NULL;
 		}
 		else if (size == 2)
 		{
@@ -399,6 +401,7 @@ void unshare(Trip& t1)
 			Trip& t2 = all_trips[t1.actualSharing->at(0)];
 			delete t1.actualSharing;
 			t2.actualSharing = NULL;
+			t1.actualSharing = NULL;
 			for (int t3id : t2.potentialSharing)
 			{
 				Trip& t3 = all_trips[t3id];
@@ -406,6 +409,8 @@ void unshare(Trip& t1)
 				{
 					t3.actualSharing->push_back(t2.id);
 					t2.actualSharing = t3.actualSharing;
+					//if (t3.actualSharing->size() == 2 && !DoableTripModes[t3.mode])
+					//	all_people[t3.perid].tours[t3.tourid]->doableTripCount++;
 				}
 			}
 			if (t2.actualSharing == NULL)
@@ -423,8 +428,8 @@ void unshare(Trip& t1)
 		else //size = 1 or 0
 		{
 			delete t1.actualSharing;
+			t1.actualSharing = NULL;
 		}
-		t1.actualSharing = NULL;
 	}
 }
 
