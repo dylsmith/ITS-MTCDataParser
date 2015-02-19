@@ -349,8 +349,12 @@ void checkTour(Tour& to)
 void checkTours()
 {
 	Timer ti("Checking Tours");
+	int hundr = TOUR_FILE_SIZE / 100;
 	for (int i = 0; i < TOUR_FILE_SIZE; i++)
 	{
+		if (i % hundr == 0)
+			cout << "Checking tours: " << (double)i / TOUR_FILE_SIZE * 100 << "  %" << endl;
+
 		Tour& tour = all_tours[i];
 		for (Trip*& trip : tour.trips)
 		{
@@ -481,6 +485,7 @@ void unshare(Trip& t1)
 
 void reshare()
 {
+	Timer ti("Resharing trips");
 	for (int t1id : orphanedTrips)
 	{
 		
