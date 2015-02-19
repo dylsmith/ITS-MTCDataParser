@@ -6,7 +6,7 @@
 
 #include <map>
 #include <vector>
-#include <unordered_set>
+#include <list>
 #include <iostream>
 using namespace std;
 
@@ -25,7 +25,7 @@ struct Trip
 
 	vector<int> potentialSharing;
 	//vector<int>* actualSharing;
-	unordered_set<int>* actualSharing;
+	list<int>* actualSharing;
 
 	int shareable; //1 = yes, 0 = no, -1 = unknown
 
