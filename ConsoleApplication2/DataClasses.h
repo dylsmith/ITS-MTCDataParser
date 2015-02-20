@@ -27,7 +27,8 @@ struct Trip
 	//vector<int>* actualSharing;
 	list<int>* actualSharing;
 
-	int shareable; //1 = yes, 0 = no, -1 = unknown
+	int shareable; //1 = yes, 0 = no, -1 = unknown. potential shareability
+	bool shared; //set to 0 if unshared by tour-level decisions
 
 	Trip();
 

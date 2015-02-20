@@ -53,7 +53,7 @@ set<string> TripPurposes = { "Home", "work_low", "work_med", "work_high", "work_
 "eatout", "escort_kids", "escort_no kids", "othdiscr", "othmaint", "shopping", "social" }; //Simply list acceptable purposes here
 
 //Count the number of files automatically
-double CLOSE_DISTANCE = 2.5;	//Two points must be within this to be considered closePoints. Make sure to update vector reserve() calls when changing this
+double CLOSE_DISTANCE = 1.0;	//Two points must be within this to be considered closePoints. Make sure to update vector reserve() calls when changing this
 int NUM_LOCATIONS = 1454;		//Number of locations in the simulation
 
 string DISTANCE_FILE = "D:\\Farzad\\ridesharing\\sample data\\DistanceSkimsDatabaseAM.csv";
