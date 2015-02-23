@@ -24,6 +24,10 @@ bool find(vector<short>& v, short val)
 
 
 int writeLoc = 0;
+void write(double d)
+{
+	write(to_string(d) + "%");
+}
 void write(string s)
 {
 
