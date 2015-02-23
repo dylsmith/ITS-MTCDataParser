@@ -165,6 +165,7 @@
     <ClInclude Include="FastRand.h" />
     <ClInclude Include="Globals.h" />
     <ClInclude Include="DataClasses.h" />
+    <ClInclude Include="LoadData.h" />
     <ClInclude Include="MiscFunctions.h" />
     <ClInclude Include="QuickParser.h" />
     <ClInclude Include="Timer.h" />
@@ -175,6 +176,7 @@
     <ClCompile Include="DataClasses.cpp" />
     <ClCompile Include="FastRand.cpp" />
     <ClCompile Include="Globals.cpp" />
+    <ClCompile Include="LoadData.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="MiscFunctions.cpp" />
     <ClCompile Include="QuickParser.cpp" />

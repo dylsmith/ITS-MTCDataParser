@@ -28,6 +28,8 @@ extern string TRIP_SHARING_FILE;
 
 extern int shareable;	//Trips that passed the initial checks
 extern int potentialSharing;//Trips with at least one trip it could potentially share with	
+extern int sharingBeforeTourLevel;//Trips that actually shared before tour-level checks
+extern int sharingBeforeReshare ;//Trips that actually shared before re=sharing
 extern int actualSharing;//Trips that actually shared with at least one other trip
 extern int unshared;//Trips unshared because of tour-level requirements
 extern int solo;//Trips that could not be actually shared (but weren't unshared)

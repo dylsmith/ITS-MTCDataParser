@@ -8,6 +8,16 @@
 
 using namespace std;
 
+//Generic remove function for STL classes that dont' support find() (linear search)
+template<class T>
+inline void remove(T& v, int trip)
+{
+	T::iterator it = v.begin();
+	while (*it != trip)
+		it++;
+	v.erase(it);
+}
+
 void OMPInfo();
 
 void averageSharedTrips();

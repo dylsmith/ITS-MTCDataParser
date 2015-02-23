@@ -26,6 +26,8 @@ string TRIP_SHARING_FILE = "C:\\ITS\\TripSharing.txt";
 
 int shareable = 0;	//Trips that passed the initial checks
 int potentialSharing = 0;//Trips with at least one trip it could potentially share with	
+int sharingBeforeTourLevel = 0;//Trips that actually shared before tour-level checks
+int sharingBeforeReshare = 0;//Trips that actually shared before re=sharing
 int actualSharing = 0;//Trips that actually shared with at least one other trip
 int unshared = 0;//Trips unshared because of tour-level requirements
 int solo = 0;//Trips that could not be actually shared (but weren't unshared)

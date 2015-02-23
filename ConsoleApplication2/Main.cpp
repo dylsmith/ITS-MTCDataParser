@@ -8,17 +8,14 @@
 #include "QuickParser.h"
 #include "QuickParser_inline.cpp"
 #include "Timer.h"
+#include "LoadData.h"
 
 #include <iostream>
 #include "omp.h"
 using namespace std;
 
-double distanceBetween2(int origin, int destination)
-{
-	return dist[((origin - 1) * NUM_LOCATIONS) + (destination - 1)];
-}
-
-bool Trip::isShareable()
+//Returns true if trip passes initial parameter checks
+bool Trip::isShareable()	
 {
 
 	if (shareable == UNKNOWN)
@@ -34,170 +31,18 @@ bool Trip::isShareable()
 
 }
 
-void parseClosePoints()
-{
-
-	Timer timeit("Parsing ClosePoints");
-
-	QuickParser q(DISTANCE_FILE);
-	int j = 0;
-	while (j < DISTANCE_FILE_SIZE)
-	{
-		q.parseNewLine();
-		q.parseComma();
-		q.parseComma();
-		dist[j++] = q.parseFloat();
-	}
-
-	//Check non-diagonal points where k > i. Graph is symmetric, so we don't need to check k < i
-	for (int i = 1; i <= NUM_LOCATIONS; i++)
-	{
-		closePoints[i].push_back(i);
-		for (int k = i + 1; k <= NUM_LOCATIONS; k++)
-		{
-
-			if (distanceBetween2(i, k) < CLOSE_DISTANCE)
-			{
-				closePoints[i].push_back(k);
-				closePoints[k].push_back(i);
-				close[i][k] = 1;
-				close[k][i] = 1;
-			}
-		}
-	}
-}
-void parsePeople()
-{
-	QuickParser q(PERSON_FILE);
-
-	Timer timeit("Parsing people");
-
-	for (int i = 0; i < PERSON_FILE_SIZE; i++)
-	{
-		q.parseNewLine();
-
-		q.parseComma();
-		int perid = q.parseInt();
-		q.parseComma();
-		q.parseComma();
-		q.parseComma();
-		q.parseComma();
-		q.parseComma();
-		q.parseComma();
-		q.parseComma();
-		q.parseComma();
-		q.parseComma();
-		q.parseComma();
-		q.parseComma();
-		q.parseComma();
-		all_people[perid].income = q.parseInt();
-
-		all_people[perid].id = perid;
-	}
-}
-void parseTours()
-{
-	QuickParser q(TOUR_FILE);
-
-	Timer timeit("Parsing tours");
-
-	for (int i = 0; i < TOUR_FILE_SIZE; i++)
-	{
-		q.parseNewLine();
-		
-		int hhid = q.parseInt();
-		int perid = q.parseInt();
-		q.parseComma();
-		q.parseComma();
-		int tourid = q.parseInt();
-		q.parseComma();
-		q.parseComma();
-		q.parseComma();
-		q.parseComma();
-		q.parseComma();
-		q.parseComma();
-		q.parseComma();
-		q.parseComma();
-		q.parseComma();
-		q.parseComma();
-		all_tours[i].numStops = q.parseInt() + q.parseInt(); //Outbound stops + inbound stops
-
-
-		all_tours[i].hhid = hhid;
-		all_tours[i].id = tourid;
-		all_people[perid].tours[tourid] = &all_tours[i];
-	}
-}
-void parseTrips()
-{
-	QuickParser q(TRIP_FILE);
-	Timer timeit("Parsing trips");
-
-	for (int i = 5; i < 24; i++)
-	{
-		for (int k = 1; k <= NUM_LOCATIONS; k++)
-		{
-			organized[i][k] = new vector<Trip*>[NUM_LOCATIONS + 1];
-			organized[i][k]->reserve(70);
-		}
-	}
-
-	for (int i = 0; i < TRIP_FILE_SIZE; i++)
-	{
-		Trip& trip = all_trips[i];
-
-		q.parseNewLine();
-
-		q.parseComma();
-		trip.perid = q.parseInt();
-		trip.numPassengers = q.parseInt();
-		trip.tourid = q.parseInt();
-		q.parseComma();
-		q.parseComma();
-		trip.purpose = q.parseString();
-		q.parseComma();
-		q.parseComma();
-		trip.origin = q.parseInt();
-		q.parseComma();
-		trip.destination = q.parseInt();
-		q.parseComma();
-		q.parseComma();
-		trip.hour = q.parseInt();
-		trip.mode = q.parseInt();
-		all_trips[i].id = i;
-
-		if (trip.isShareable())
-		{
-			organized[trip.hour][trip.origin][trip.destination].push_back(&all_trips[i]);
-			shareable++;
-		}
-
-		all_people[trip.perid].tours[trip.tourid]->trips.push_back(&all_trips[i]);
-	}
-}
-
-
-//Generic remove function for STL classes that dont' support find() (linear search)
-template<class T>
-void remove(T& v, int trip)
-{
-	T::iterator it = v.begin();
-	while (*it != trip)
-		it++;
-	v.erase(it);
-}
-
+//Compares trips, assuming they're potentially shareable already
 inline bool compareTrips(Trip& trip1, Trip& trip2)
 {
 	return (trip1.perid != trip2.perid);
 }
 
+//Parses the sorted trips, builds potential sharing lists
 void analyzeTrips()
 {
 	Timer ct("Analyzing trips");
 
 	long long int sharedtrips = 0;
-	long long int total = 0;
 	for (int hour = 5; hour < 24; hour++)
 	{
 		for (int origin = 1; origin <= 12; origin++)
@@ -212,9 +57,6 @@ void analyzeTrips()
 						{
 							for (Trip* trip2 : organized[hour][closeOrigin][closeDestination])
 							{
-								//if (++total % 100000000 == 0)
-								//	write("Comparing trips: " + to_string((((double)origin + (NUM_LOCATIONS * hour) - (NUM_LOCATIONS * 5)) / (NUM_LOCATIONS * 19)) * 100) + "%\n");
-								//if (++total % 100000000 == 0) cout << "Comparing trips: " << (((double)origin + (NUM_LOCATIONS * hour)) / (NUM_LOCATIONS * 24)) * 100 << "%" << endl;
 								if (compareTrips(*trip1, *trip2))
 								{
 									trip1->potentialSharing.push_back(trip2->id);
@@ -230,6 +72,7 @@ void analyzeTrips()
 	cout << "Each trip could potentially share with " << (((long double)sharedtrips / TRIP_FILE_SIZE)) << " other trips, on average." << endl;
 }
 
+//Reserves space for all data
 void reserveSpace()
 {
 	Timer t("Reserving space for all objects");
@@ -242,6 +85,7 @@ void reserveSpace()
 	closePoints = new vector<short>[NUM_LOCATIONS + 1];
 }
 
+//Frees space
 void cleanUp()
 {
 	free((void*)close);
@@ -250,14 +94,15 @@ void cleanUp()
 			delete organized[i][k];
 }
 
+//Compares two trips, checking every requirements
 bool strictCompare(Trip& t1, Trip& t2)
 {
 	return (distanceBetween2(t1.origin, t2.origin) < CLOSE_DISTANCE &&
 		distanceBetween2(t1.destination, t2.destination) < CLOSE_DISTANCE &&
 		t1.perid != t2.perid);
-	//Similar origin and destination, different perid, etc.
 }
 
+//Determines if a trip can share with a set of trips
 bool canShare(list<int>* t1Vec, Trip& t2)
 {
 	int numPassengers = 0;
@@ -278,9 +123,11 @@ bool canShare(list<int>* t1Vec, Trip& t2)
 		return(numPassengers >= MinPeople);
 }
 
-bool findGroup(Trip& t1); bool formGroup(Trip& t1);
+//Prototypes for addToSharing
+//bool findGroup(Trip& t1); bool formGroup(Trip& t1);
 void addToSharing(Trip& t1);
 
+//Checks to see if a tour can be shared again, and does so if needed
 void reCheckTour(Tour& to)
 {
 	if (!to.shared && to.trips.size() > 0 && (((double)to.doableTripCount / to.trips.size()) >= TourDoableRequirement))
@@ -297,13 +144,12 @@ void reCheckTour(Tour& to)
 	}
 }
 
-int acount = 0;
+//Tries to add a trip back to the sharing groups, recursively following any new additions
 void addToSharing(Trip& t1)
 {
 	bool joinGroup = true;
 	if (t1.actualSharing == NULL && t1.shared)
 	{
-		if (++acount % 10 == 0) cout << acount << endl;
 		for (int t2id : t1.potentialSharing)
 		{
 			Trip& t2 = all_trips[t2id];
@@ -381,7 +227,7 @@ void addToSharing(Trip& t1)
 	}
 }
 
-
+//Tries to add a trip to an existing group
 bool findGroup(Trip& t1)	//Returns true if a group is found. If true, t1.actualSharing exists
 {
 	for (int t2id : t1.potentialSharing)
@@ -412,7 +258,7 @@ bool findGroup(Trip& t1)	//Returns true if a group is found. If true, t1.actualS
 
 }
 
-void checkTour(Tour& to);
+//Tries to form a new group around a trip
 bool formGroup(Trip& t1)	//Returns true if at least one other trip is added. Will always create t1.actualSharing of some size >= 1
 {
 	if (DrivingModes[t1.mode])
@@ -449,6 +295,10 @@ bool formGroup(Trip& t1)	//Returns true if at least one other trip is added. Wil
 	return t1.actualSharing != NULL;
 }
 
+//Prototypes for removeFromSharing
+void checkTour(Tour& to);
+
+//Tries to remove a trip from the sharing groups, recursively following any removals
 void removeFromSharing(Trip& t1)
 {
 	if (t1.shared)
@@ -494,6 +344,7 @@ void removeFromSharing(Trip& t1)
 	}
 }
 
+//Checks to see if a tour cannot be shared, and unshares it if needed
 void checkTour(Tour& to)
 {
 	if (to.shared && to.trips.size() > 0 && (((double)to.doableTripCount / to.trips.size()) < TourDoableRequirement))
@@ -506,8 +357,7 @@ void checkTour(Tour& to)
 	}
 }
 
-
-int sharingBeforeTripLevel = 0;
+//Tries to form actual sharing groups for drivers
 void shareTrips()
 {
 	Timer ti("Sharing trips");
@@ -530,16 +380,15 @@ void shareTrips()
 		}
 		else if (t1.actualSharing->size() > 1)
 		{
-			sharingBeforeTripLevel++;
+			sharingBeforeTourLevel++;
 		}
 	}
 }
 
-int sharingBeforeReshare = 0;
+//Checks to ensure all tours can be shared
 void checkTours()
 {
 	Timer ti("Checking Tours");
-	//int hundr = TOUR_FILE_SIZE / 100;
 	for (int i = 0; i < TOUR_FILE_SIZE; i++)
 	{
 
@@ -554,8 +403,6 @@ void checkTours()
 	
 	for (int i = 0; i < TOUR_FILE_SIZE; i++)
 	{
-		//if (i % hundr == 0)
-		//	cout << "Checking tours: " << round((double)i / TOUR_FILE_SIZE * 100) << "%" << endl;
 		checkTour(all_tours[i]);
 	}
 
@@ -563,6 +410,7 @@ void checkTours()
 		if (all_trips[i].actualSharing && all_trips[i].actualSharing->size() > 1) sharingBeforeReshare++;
 }
 
+//Attempts to re-share trips after tour-level removals
 void shareTrips2()
 {
 	Timer ti("Resharing trips");
@@ -572,37 +420,11 @@ void shareTrips2()
 		if (t1.isShareable() && t1.actualSharing == NULL)
 		{
 			addToSharing(t1);
-			/*
-			for (int t2id : t1.potentialSharing)
-			{
-				Trip& t2 = all_trips[t2id];
-				if (t2.shared)
-				{
-					if (t2.actualSharing)
-					{
-						if (canShare(t2.actualSharing, t1))
-						{
-							t2.actualSharing->push_back(t1.id);
-							t1.actualSharing = t2.actualSharing;
-						}
-					}
-					else if (DrivingModes[t1.mode])
-					{
-						t1.actualSharing = new list<int>();
-						t1.actualSharing->push_back(t1.id);
-						t1.actualSharing->push_back(t1.id);
-					}
-				}
-			}
-			if (t1.actualSharing == NULL)
-			{
-				t1.actualSharing = new list<int>();
-				t1.actualSharing->push_back(t1.id);
-			}*/
 		}
 	}
 }
 
+//Gathers data after algorithms are finished
 void postStatistics()
 {
 	for (int i = 0; i < TRIP_FILE_SIZE; i++)
@@ -639,77 +461,6 @@ void postStatistics()
 			if (t.isShareable())
 				orphaned++;
 		}
-
-		/*
-		if (t.shared)
-		{
-			if (t.potentialSharing.size() > 0)
-				potentialSharing++;
-
-			if (t.actualSharing)
-			{
-				if (t.actualSharing->size() == 1)
-					solo++;
-				else if (t.actualSharing->size() > 1)
-				{
-					actualSharing++;
-					for (int k : *t.actualSharing)
-					{
-						Trip& t2 = all_trips[k];
-						if (DrivingModes[t2.mode])
-						{
-							VMTReduction += distanceBetween2(t2.origin, t2.destination);
-						}
-					}
-				}
-			}
-			else
-			{
-				orphaned++;
-			}
-		}
-		else
-		{
-			if (t.actualSharing)
-			{
-				unshared++;
-			}
-			else
-			{
-				//was not initially shareable
-			}
-		}
-		
-		if (t.isShareable())
-		{
-			if (!t.actualSharing)
-			{
-				orphaned++;
-			}
-			else
-			{
-				if (t.actualSharing->size() > 1)
-				{
-					actualSharing++;
-					for (int k : *t.actualSharing)
-					{
-						Trip& t2 = all_trips[k];
-						if (DrivingModes[t2.mode])
-						{
-							VMTReduction += distanceBetween2(t2.origin, t2.destination);
-						}
-					}
-				}
-				else if (t.actualSharing->size() == 1)
-				{
-					solo++;
-				}
-			}
-			if (t.potentialSharing.size() > 1)
-			{
-				potentialSharing++;
-			}
-		}*/
 	}
 
 	ofstream outf(DATA_FILE);
@@ -721,7 +472,7 @@ void postStatistics()
 	outf << "Total trips: " << TRIP_FILE_SIZE << endl;
 	outf << "Shareable trips: " << shareable << endl;
 	outf << "Trips with at least one potentially shared trip: " << potentialSharing << endl;
-	outf << "Trips with at least one actually shared trip (before tour-level checks): " << sharingBeforeTripLevel << endl;
+	outf << "Trips with at least one actually shared trip (before tour-level checks): " << sharingBeforeTourLevel << endl;
 	outf << "Trips with at least one actually shared trip (before re-sharing): " << sharingBeforeReshare << endl;
 	outf << "Trips with at least one actually shared trip: " << actualSharing << endl;
 	outf << "Trips with no actually shared trips: " << solo << endl;
@@ -731,6 +482,7 @@ void postStatistics()
 	outf.close();
 }
 
+//Writes output related to each trip's sharing to a file
 void tripSharingOutput()
 {
 	Timer ti("Writing trip sharing to file");
@@ -749,6 +501,7 @@ void tripSharingOutput()
 	}
 }
 
+//Records total execution time
 void timerWrapper()
 {
 	Timer total("Total");
@@ -794,6 +547,7 @@ void timerWrapper()
 
 //output: trip (split by sharing and not sharing)
 
+//Main
 int _tmain(int argc, _TCHAR* argv[])
 {
 	timerWrapper();
