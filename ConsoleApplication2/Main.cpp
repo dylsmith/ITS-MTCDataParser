@@ -15,7 +15,7 @@
 using namespace std;
 
 //Returns true if trip passes initial parameter checks
-bool Trip::isShareable()	
+bool Trip::isShareable()
 {
 
 	if (shareable == UNKNOWN)
@@ -39,7 +39,7 @@ inline bool compareTrips(Trip& trip1, Trip& trip2)
 
 //Parses the sorted trips, builds potential sharing lists
 void analyzeTrips()
-{
+	{
 	Timer ct("Analyzing trips");
 
 	long long int sharedtrips = 0;
@@ -61,10 +61,10 @@ void analyzeTrips()
 								{
 									trip1->potentialSharing.push_back(trip2->id);
 									sharedtrips++;
-								}
-							}
-						}
-					}
+			}
+		}
+	}
+}
 				}
 			}
 		}
@@ -74,7 +74,7 @@ void analyzeTrips()
 
 //Reserves space for all data
 void reserveSpace()
-{
+	{
 	Timer t("Reserving space for all objects");
 
 	memset(close, 0, DISTANCE_FILE_SIZE);
@@ -83,7 +83,7 @@ void reserveSpace()
 	all_tours = new Tour[TOUR_FILE_SIZE];
 	all_trips = new Trip[TRIP_FILE_SIZE];
 	closePoints = new vector<short>[NUM_LOCATIONS + 1];
-}
+	}
 
 //Frees space
 void cleanUp()
@@ -96,12 +96,12 @@ void cleanUp()
 
 //Compares two trips, checking every requirements
 bool strictCompare(Trip& t1, Trip& t2)
-{
+	{
 	return (distanceBetween2(t1.origin, t2.origin) < CLOSE_DISTANCE &&
 		distanceBetween2(t1.destination, t2.destination) < CLOSE_DISTANCE &&
 		t1.perid != t2.perid);
 }
-
+		
 //Determines if a trip can share with a set of trips
 bool canShare(list<int>* t1Vec, Trip& t2)
 {
@@ -112,11 +112,11 @@ bool canShare(list<int>* t1Vec, Trip& t2)
 		if (!strictCompare(t1, t2))
 		{
 			return false;
-		}
-		numPassengers += t1.numPassengers;
 	}
+		numPassengers += t1.numPassengers;
+}
 	numPassengers += t2.numPassengers;
-	
+
 	if (Maximize)
 		return(numPassengers <= MaxPeople);	//Move this check to after trip set generation
 	else
@@ -129,9 +129,9 @@ void addToSharing(Trip& t1);
 
 //Checks to see if a tour can be shared again, and does so if needed
 void reCheckTour(Tour& to)
-{
-	if (!to.shared && to.trips.size() > 0 && (((double)to.doableTripCount / to.trips.size()) >= TourDoableRequirement))
 	{
+	if (!to.shared && to.trips.size() > 0 && (((double)to.doableTripCount / to.trips.size()) >= TourDoableRequirement))
+		{
 		to.shared = 1;
 		for (Trip*& t : to.trips)
 		{
@@ -139,8 +139,8 @@ void reCheckTour(Tour& to)
 			{
 				t->shared = 1;
 				addToSharing(*t);
-			}
 		}
+	}
 	}
 }
 
@@ -159,7 +159,7 @@ void addToSharing(Trip& t1)
 				{
 					t2.actualSharing->push_back(t1.id);
 					t1.actualSharing = t2.actualSharing;
-					
+
 					if (t2.actualSharing->size() == 2)
 					{
 						if (!DoableTripModes[t2.mode])
@@ -208,7 +208,7 @@ void addToSharing(Trip& t1)
 						t1.actualSharing->push_back(t2id);
 						t2.actualSharing = t1.actualSharing;
 					}
-					
+
 					if (!DoableTripModes[t2.mode])
 					{
 						Tour& to = *all_people[t2.perid].tours[t2.tourid];
@@ -216,7 +216,6 @@ void addToSharing(Trip& t1)
 						reCheckTour(to);
 					}
 				}
-
 			}
 		}
 	}
@@ -255,31 +254,30 @@ bool findGroup(Trip& t1)	//Returns true if a group is found. If true, t1.actualS
 		}
 	}
 	return t1.actualSharing != NULL;
-
 }
 
 //Tries to form a new group around a trip
 bool formGroup(Trip& t1)	//Returns true if at least one other trip is added. Will always create t1.actualSharing of some size >= 1
-{
-	if (DrivingModes[t1.mode])
 	{
+	if (DrivingModes[t1.mode])
+		{
 		t1.actualSharing = new list<int>();
 		t1.actualSharing->push_back(t1.id);
 		for (int t2id : t1.potentialSharing)
-		{
+			{
 			Trip& t2 = all_trips[t2id];
 			if (t2.actualSharing == NULL && t2.shared && canShare(t1.actualSharing, t2))
-			{
+				{
 				t1.actualSharing->push_back(t2id);
 				t2.actualSharing = t1.actualSharing;
 				if (t1.actualSharing->size() == 2)
-				{
-					if (!DoableTripModes[t1.mode])
 					{
+					if (!DoableTripModes[t1.mode])
+						{
 						Tour& to = *all_people[t1.perid].tours[t1.tourid];
 						to.doableTripCount++;
 						reCheckTour(to);
-					}
+						}
 					if (!DoableTripModes[t2.mode])
 					{
 						Tour& to = *all_people[t2.perid].tours[t2.tourid];
@@ -291,9 +289,9 @@ bool formGroup(Trip& t1)	//Returns true if at least one other trip is added. Wil
 		}/*
 		if (t1.actualSharing->size() == 1)
 		delete t1.actualSharing;*/
-	}
+		}
 	return t1.actualSharing != NULL;
-}
+	}
 
 //Prototypes for removeFromSharing
 void checkTour(Tour& to);
@@ -330,14 +328,14 @@ void removeFromSharing(Trip& t1)
 				}
 			}
 			else if (size > 2) //size > 2
-			{
+				{
 				remove(*t1.actualSharing, t1.id);
 				t1.actualSharing = new list<int>();
 				t1.actualSharing->push_back(t1.id);
 			}
 		}
 		else
-		{
+					{
 			t1.actualSharing = new list<int>();
 			t1.actualSharing->push_back(t1.id);
 		}
@@ -346,7 +344,7 @@ void removeFromSharing(Trip& t1)
 
 //Checks to see if a tour cannot be shared, and unshares it if needed
 void checkTour(Tour& to)
-{
+	{
 	if (to.shared && to.trips.size() > 0 && (((double)to.doableTripCount / to.trips.size()) < TourDoableRequirement))
 	{
 		to.shared = 0;
@@ -409,7 +407,7 @@ void checkTours()
 	for (int i = 0; i < TRIP_FILE_SIZE; i++)
 		if (all_trips[i].actualSharing && all_trips[i].actualSharing->size() > 1) sharingBeforeReshare++;
 }
-
+	
 //Attempts to re-share trips after tour-level removals
 void shareTrips2()
 {
@@ -493,13 +491,12 @@ void tripSharingOutput()
 		if (all_trips[t1id].actualSharing)
 		{
 			for (int t2id : *all_trips[t1id].actualSharing)
-			{
 				outf << ',' << t2id;
-			}
 		}
-		outf << '\n';
 	}
+	outf << '\n';
 }
+
 
 //Records total execution time
 void timerWrapper()
@@ -512,13 +509,13 @@ void timerWrapper()
 
 	parsePeople();
 	parseTours();
-	parseTrips();	
-	analyzeTrips();	
-	
+	parseTrips();
+	analyzeTrips();
 
-	shareTrips();	//Share all possible trips, split based on max and min later
-	checkTours();	//Loop until 5% or lass are removed (ensure not to add to unshareed trips)
-	shareTrips2();//7457
+
+	shareTrips();	
+	checkTours();	
+	shareTrips2();
 	postStatistics();
 
 	//tripSharingOutput(); //Output a list of each trip and the trips it's actually shared with
@@ -528,19 +525,6 @@ void timerWrapper()
 	//output a list of all trips
 
 
-	/*
-	log file:
-		Max or Min
-		# of trips
-		# valid trpis
-		# of trips with nonzero potential sharing
-		# o frips with nonzero actual sharing
-		# of trips removed at tour level
-		# of trips orphaned at tour level
-		# of orphaned trips re-added //this will loop until 5%
-		//VMT reduction 
-
-	*/
 
 
 }
