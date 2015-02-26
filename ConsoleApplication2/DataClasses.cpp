@@ -21,6 +21,7 @@ Trip::Trip()
 	potentialSharing.reserve(4);
 	shareable = UNKNOWN;
 	shared = 1;
+	leader = NULL;
 }
 
 

@@ -29,6 +29,7 @@ struct Trip
 
 	int shareable; //1 = yes, 0 = no, -1 = unknown. potential shareability
 	bool shared; //set to 0 if unshared by tour-level decisions
+	Trip* leader;
 
 	Trip();
 
