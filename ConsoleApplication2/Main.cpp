@@ -159,6 +159,7 @@ void addToSharing(Trip& t1)
 				{
 					t2.actualSharing->push_back(t1.id);
 					t1.actualSharing = t2.actualSharing;
+					t1.leader = t2.leader;
 
 					if (t2.actualSharing->size() == 2)
 					{
@@ -211,6 +212,7 @@ void addToSharing(Trip& t1)
 						{
 							t1.actualSharing->push_back(t2id);
 							t2.actualSharing = t1.actualSharing;
+							t2.leader = t1.leader;
 						}
 
 						if (!DoableTripModes[t2.mode])
@@ -226,6 +228,7 @@ void addToSharing(Trip& t1)
 	}
 	if (t1.actualSharing == NULL)
 	{
+		t1.leader = &t1;
 		t1.actualSharing = new list<int>();
 		t1.actualSharing->push_back(t1.id);
 	}
@@ -240,6 +243,7 @@ bool findGroup(Trip& t1)	//Returns true if a group is found. If true, t1.actualS
 		if (t2.shared && t2.actualSharing && canShare(t2.actualSharing, t1))
 		{
 			t2.actualSharing->push_back(t1.id);
+			t1.leader = t2.leader;
 			t1.actualSharing = t2.actualSharing;
 			if (t2.actualSharing->size() == 2)
 			{
@@ -308,38 +312,25 @@ void checkTour(Tour& to);
 void removeFromSharing(Trip& t1)
 {
 
-	if (!DoableTripModes[t1.mode])
-	{
-		Tour& to1 = *all_people[t1.perid].tours[t1.tourid];	
-		to1.doableTripCount--;
-		checkTour(to1);
-	}
+
+
 
 	if (t1.shared)
 	{
 		t1.shared = 0;
+		if (!DoableTripModes[t1.mode])
+		{
+			Tour& to1 = *all_people[t1.perid].tours[t1.tourid];
+			to1.doableTripCount--;
+			checkTour(to1);
+		}
+
 		if (t1.potentialSharing.size() > 0)
 			unshared++;
 
 		if (t1.actualSharing)
 		{
 			int size = t1.actualSharing->size();
-
-			if (t1.leader == &t1)
-			{
-				Trip* newLeader = NULL;
-				for (int t2id : *t1.actualSharing)
-				{
-					if (DrivingModes[all_trips[t2id].mode])
-						newLeader = &all_trips[t2id];
-				}
-				if (!newLeader)
-				{
-					for (int t2id : *t1.actualSharing)
-						removeFromSharing(all_trips[t2id]);
-					return;
-				}
-			}
 
 			if (size == 2)
 			{
@@ -352,7 +343,8 @@ void removeFromSharing(Trip& t1)
 				remove(*t1.actualSharing, t2id);
 				Trip& t2 = all_trips[t2id];
 				t2.actualSharing = NULL;
-				t1.leader = false;
+				t2.leader = &t2;
+				t1.leader = &t1;
 				if (!DoableTripModes[t2.mode])
 				{
 					Tour& to2 = *all_people[t2.perid].tours[t2.tourid];
@@ -361,7 +353,31 @@ void removeFromSharing(Trip& t1)
 				}
 			}
 			else if (size > 2) //size > 2
+			{
+				if (t1.leader == &t1)
 				{
+					Trip* newLeader = NULL;
+					for (int t2id : *t1.actualSharing)
+					{
+						if (DrivingModes[all_trips[t2id].mode])
+							newLeader = &all_trips[t2id];
+					}
+					if (!newLeader)
+					{
+						for (int t2id : *t1.actualSharing)
+							removeFromSharing(all_trips[t2id]);
+						return;
+					}
+					else
+					{
+						for (int t2id : *t1.actualSharing)
+							all_trips[t2id].leader = newLeader;
+					}
+				}
+				else
+					t1.leader = &t1;
+
+				
 				remove(*t1.actualSharing, t1.id);
 				t1.actualSharing = new list<int>();
 				t1.actualSharing->push_back(t1.id);
@@ -369,6 +385,7 @@ void removeFromSharing(Trip& t1)
 		}
 		else
 		{
+			t1.leader = &t1;
 			t1.actualSharing = new list<int>();
 			t1.actualSharing->push_back(t1.id);
 		}
@@ -406,6 +423,7 @@ void shareTrips()
 		Trip& t1 = all_trips[t1id];
 		if (t1.actualSharing == NULL)
 		{
+			t1.leader = &t1;
 			t1.actualSharing = new list<int>();
 			t1.actualSharing->push_back(t1id);
 		}
@@ -474,7 +492,7 @@ void postStatistics()
 				for (int k : *t.actualSharing)
 				{
 					Trip& t2 = all_trips[k];
-					if (DrivingModes[t2.mode])
+					if (DrivingModes[t2.mode] && t2.leader == &t2)
 					{
 						VMTReduction += distanceBetween2(t2.origin, t2.destination);
 					}
