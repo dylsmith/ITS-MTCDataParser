@@ -322,11 +322,11 @@ void removeFromSharing(Trip& t1)
 							break;
 						}
 					}
+
 					if (!newLeader)
 					{
 						for (int t2id : *t1.actualSharing)
 							removeFromSharing(all_trips[t2id]);
-						return;
 					}
 					else
 					{
