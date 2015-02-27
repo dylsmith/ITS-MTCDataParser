@@ -567,7 +567,7 @@ void tripDetailsOutput()
 	int leaderCount = 0;
 	for (int i = 0; i < TRIP_FILE_SIZE; i++)
 	{
-		if (all_trips[i].leader)
+		if (all_trips[i].leader == &all_trips[i])
 			leaderCount++;
 	}
 	cout << leaderCount << " leaders" << endl;
@@ -592,7 +592,7 @@ void timerWrapper()
 	checkTours();	
 	shareTrips2();
 	postStatistics();
-
+	tripDetailsOutput();
 	//tripSharingOutput(); //Output a list of each trip and the trips it's actually shared with
 
 	//output a .csv with all shared drivers' trip info and one with unsharedtrips

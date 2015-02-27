@@ -54,24 +54,26 @@ unsigned int RandomFailChance = 0; //%chance a trip will randomly not be shareab
 set<string> TripPurposes = { "Home", "work_low", "work_med", "work_high", "work_very high", "university", "school_high", "school_grade", "atwork_business", "atwork_eat", "atwork_maint", \
 "eatout", "escort_kids", "escort_no kids", "othdiscr", "othmaint", "shopping", "social" }; //Simply list acceptable purposes here
 
+//Dylan's home PC settings
+/*
+string DISTANCE_FILE = "C:\\ITS\\DistanceSkimsDatabaseAM.csv";
+string PERSON_FILE = "C:\\ITS\\personFile.p2011s3a.2010.csv";
+string TOUR_FILE = "C:\\ITS\\indivTourData_3.csv";
+string TRIP_FILE = "C:\\ITS\\indivTripData_3.csv";*/
+
+//Server settings
+string DISTANCE_FILE = "D:\\Farzad\\ridesharing\\sample data\\DistanceSkimsDatabaseAM.csv";
+string PERSON_FILE = "D:\\Farzad\\ridesharing\\sample data\\personFile.p2011s3a.2010.csv";
+string TOUR_FILE = "D:\\Farzad\\ridesharing\\sample data\\indivTourData_3.csv";
+string TRIP_FILE = "D:\\Farzad\\ridesharing\\sample data\\indivTripData_3.csv";
+
+
 //Count the number of files automatically
 double CLOSE_DISTANCE = 1.0;	//Two points must be within this to be considered closePoints. Make sure to update vector reserve() calls when changing this
 int NUM_LOCATIONS = 1454;		//Number of locations in the simulation
-
-//string DISTANCE_FILE = "D:\\Farzad\\ridesharing\\sample data\\DistanceSkimsDatabaseAM.csv";
-string DISTANCE_FILE = "C:\\ITS\\DistanceSkimsDatabaseAM.csv";
 int DISTANCE_FILE_SIZE = NUM_LOCATIONS * NUM_LOCATIONS;
-
-//string PERSON_FILE = "D:\\Farzad\\ridesharing\\sample data\\personFile.p2011s3a.2010.csv";
-string PERSON_FILE = "C:\\ITS\\personFile.p2011s3a.2010.csv";
 int PERSON_FILE_SIZE = lineCount(PERSON_FILE) - 1;//7053334
-
-//string TOUR_FILE = "D:\\Farzad\\ridesharing\\sample data\\indivTourData_3.csv";
-string TOUR_FILE = "C:\\ITS\\indivTourData_3.csv";
 int TOUR_FILE_SIZE = lineCount(TOUR_FILE) - 1;//8914778
-
-//string TRIP_FILE = "D:\\Farzad\\ridesharing\\sample data\\indivTripData_3.csv";
-string TRIP_FILE = "C:\\ITS\\indivTripData_3.csv";
 int TRIP_FILE_SIZE = lineCount(TRIP_FILE) - 1;//22811684
 
 
