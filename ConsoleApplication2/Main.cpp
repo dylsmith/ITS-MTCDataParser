@@ -559,7 +559,7 @@ void tripDetailsOutput()
 	string line;
 	inf >> line;
 	int count = 0;
-	while (inf >> line);
+	while (getline(inf, line));
 	{
 		lines[count++] = line;
 	}
@@ -576,7 +576,7 @@ void tripDetailsOutput()
 		{
 			if (t.leader == &t)
 			{
-				sharedCount++;
+				sharedCount += t.actualSharing->size();
 				shared << lines[i];
 			}
 		}
@@ -585,7 +585,7 @@ void tripDetailsOutput()
 			unsharedCount++;
 			unshared << lines[i];
 		}
-	}
+	}	
 	cout << "shared: " << sharedCount << endl << "unshared: " << unsharedCount << endl;
 }
 
