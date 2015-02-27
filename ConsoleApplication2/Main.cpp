@@ -532,7 +532,8 @@ void tripDetailsOutput()
 	for (int i = 0; i < TRIP_FILE_SIZE; i++)
 	{
 		Trip& t = all_trips[i];
-		if (t.actualSharing->size() >= 1)
+		
+		if (t.actualSharing->size() > 1)
 		{
 			if (t.leader == &t)
 			{
