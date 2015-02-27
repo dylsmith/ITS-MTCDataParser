@@ -147,43 +147,40 @@ void reCheckTour(Tour& to)
 //Tries to add a trip back to the sharing groups, recursively following any new additions
 void addToSharing(Trip& t1)
 {
-	bool joinGroup = true;
-	if (t1.actualSharing == NULL && t1.shared)
+	bool joinGroup = true;	//Set to true when trying to join a group
+	if (t1.actualSharing == NULL && t1.shared)	//If trip is eligible
 	{
 		for (int t2id : t1.potentialSharing)
 		{
 			Trip& t2 = all_trips[t2id];
-			if (joinGroup && t2.actualSharing)
+			if (joinGroup && t2.actualSharing) //If t2 has a group
 			{
-				if (t2.shared && canShare(t2.actualSharing, t1))
+				if (t2.shared && canShare(t2.actualSharing, t1)) //If we can share with t2's group
 				{
 					t2.actualSharing->push_back(t1.id);
 					t1.actualSharing = t2.actualSharing;
 					t1.leader = t2.leader;
 
-					if (t2.actualSharing->size() == 2)
+					if (t2.actualSharing->size() == 2 && !DoableTripModes[t2.mode])	//If we've just made these trips shareable
 					{
-						if (!DoableTripModes[t2.mode])
-						{
-							Tour& to = *all_people[t2.perid].tours[t2.tourid];
-							to.doableTripCount++;
-							reCheckTour(to);
-						}
-						if (!DoableTripModes[t1.mode])
-						{
-							Tour& to = *all_people[t1.perid].tours[t1.tourid];
-							to.doableTripCount++;
-							reCheckTour(to);
-						}
+						Tour& to = *all_people[t2.perid].tours[t2.tourid];
+						to.doableTripCount++;
+						reCheckTour(to);
+					}
+					if (!DoableTripModes[t1.mode])
+					{
+						Tour& to = *all_people[t1.perid].tours[t1.tourid];
+						to.doableTripCount++;
+						reCheckTour(to);
 					}
 					return;
 				}
 			}
 			else
 			{
-				if (DrivingModes[t1.mode])
+				if (DrivingModes[t1.mode])	//if t1 can be a driver
 				{
-					if (joinGroup)
+					if (joinGroup)	//if this is the first time we're in the group-forming stage
 					{
 						joinGroup = false;
 						t1.leader = &t1;
@@ -206,7 +203,7 @@ void addToSharing(Trip& t1)
 							reCheckTour(to);
 						}
 					}
-					else
+					else //if we've formed a group and are now adding to it
 					{
 						if (canShare(t1.actualSharing, t2))
 						{
@@ -226,7 +223,7 @@ void addToSharing(Trip& t1)
 			}
 		}
 	}
-	if (t1.actualSharing == NULL)
+	if (t1.actualSharing == NULL)	//If we failed to find or form a group, make a solo trip
 	{
 		t1.leader = &t1;
 		t1.actualSharing = new list<int>();
@@ -234,41 +231,10 @@ void addToSharing(Trip& t1)
 	}
 }
 
-//Tries to add a trip to an existing group
-bool findGroup(Trip& t1)	//Returns true if a group is found. If true, t1.actualSharing exists
-{
-	for (int t2id : t1.potentialSharing)
-	{
-		Trip& t2 = all_trips[t2id];
-		if (t2.shared && t2.actualSharing && canShare(t2.actualSharing, t1))
-		{
-			t2.actualSharing->push_back(t1.id);
-			t1.leader = t2.leader;
-			t1.actualSharing = t2.actualSharing;
-			if (t2.actualSharing->size() == 2)
-			{
-				if (!DoableTripModes[t2.mode])
-				{
-					Tour& to = *all_people[t2.perid].tours[t2.tourid];
-					to.doableTripCount++;
-					reCheckTour(to);
-				}
-				if (!DoableTripModes[t1.mode])
-				{
-					Tour& to = *all_people[t1.perid].tours[t1.tourid];
-					to.doableTripCount++;
-					reCheckTour(to);
-				}
-			}
-		}
-	}
-	return t1.actualSharing != NULL;
-}
-
 //Tries to form a new group around a trip
 bool formGroup(Trip& t1)	//Returns true if at least one other trip is added. Will always create t1.actualSharing of some size >= 1
 {
-	if (DrivingModes[t1.mode])
+	if (DrivingModes[t1.mode])//If t1 can drive
 	{
 		t1.leader = &t1;
 		t1.actualSharing = new list<int>();
@@ -276,30 +242,25 @@ bool formGroup(Trip& t1)	//Returns true if at least one other trip is added. Wil
 		for (int t2id : t1.potentialSharing)
 		{
 			Trip& t2 = all_trips[t2id];
-			if (t2.actualSharing == NULL && t2.shared && canShare(t1.actualSharing, t2))
+			if (t2.actualSharing == NULL && t2.shared && canShare(t1.actualSharing, t2))//if t2 is eligible and can share
 			{
 				t2.leader = t1.leader;
 				t1.actualSharing->push_back(t2id);
 				t2.actualSharing = t1.actualSharing;
-				if (t1.actualSharing->size() == 2)
+				if (t1.actualSharing->size() == 2 && !DoableTripModes[t1.mode])//If we've just made these trips shareable
 				{
-					if (!DoableTripModes[t1.mode])
-					{
-						Tour& to = *all_people[t1.perid].tours[t1.tourid];
-						to.doableTripCount++;
-						reCheckTour(to);
-					}
-					if (!DoableTripModes[t2.mode])
-					{
-						Tour& to = *all_people[t2.perid].tours[t2.tourid];
-						to.doableTripCount++;
-						reCheckTour(to);
-					}
+					Tour& to = *all_people[t1.perid].tours[t1.tourid];
+					to.doableTripCount++;
+					reCheckTour(to);
+				}
+				if (!DoableTripModes[t2.mode])
+				{
+					Tour& to = *all_people[t2.perid].tours[t2.tourid];
+					to.doableTripCount++;
+					reCheckTour(to);
 				}
 			}
-		}/*
-		if (t1.actualSharing->size() == 1)
-		delete t1.actualSharing;*/
+		}
 	}
 	return t1.actualSharing != NULL;
 }
@@ -311,11 +272,7 @@ void checkTour(Tour& to);
 //Check to make sure there's still a driver
 void removeFromSharing(Trip& t1)
 {
-
-
-
-
-	if (t1.shared)
+	if (t1.shared)	//if t1 hasn't already been unshared
 	{
 		t1.shared = 0;
 		if (!DoableTripModes[t1.mode])
@@ -360,7 +317,10 @@ void removeFromSharing(Trip& t1)
 					for (int t2id : *t1.actualSharing)
 					{
 						if (DrivingModes[all_trips[t2id].mode])
+						{
 							newLeader = &all_trips[t2id];
+							break;
+						}
 					}
 					if (!newLeader)
 					{
