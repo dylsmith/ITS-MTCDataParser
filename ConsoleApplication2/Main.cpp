@@ -511,15 +511,14 @@ void tripSharingOutput()
 void tripDetailsOutput()
 {
 	Timer ti("Writing trip details");
-	ifstream inf(TRIP_FILE);
 
+	ifstream inf(TRIP_FILE);
 	string* lines;
 	lines = new string[TRIP_FILE_SIZE];
-
 	string line;
 	inf >> line;
 	int count = 0;
-	while (getline(inf, line));
+	while (getline(inf, line))
 	{
 		lines[count++] = line;
 	}
@@ -536,16 +535,18 @@ void tripDetailsOutput()
 		{
 			if (t.actualSharing->size() > 1)
 			{
-				sharedCount += t.actualSharing->size();
-				for (int t2 : *t.actualSharing)
+				if (DrivingModes[t.mode])
 				{
-					all_trips[t2].actualSharing = NULL;
+					sharedCount += t.actualSharing->size();
+					shared << lines[i] << endl;
+					for (int t2 : *t.actualSharing)
+						all_trips[t2].actualSharing = NULL;
 				}
 			}
 			else
 			{
 				unsharedCount++;
-				unshared << lines[i];
+				unshared << lines[i] << endl;
 			}
 		}
 	}
