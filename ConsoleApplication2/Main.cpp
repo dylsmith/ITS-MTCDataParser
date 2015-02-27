@@ -564,13 +564,29 @@ void tripDetailsOutput()
 		lines[count++] = line;
 	}
 
-	int leaderCount = 0;
+	ofstream shared(SHARED_TRIPS_FILE);
+	ofstream unshared(UNSHARED_TRIPS_FILE);
+
+	int sharedCount = 0;
+	int unsharedCount = 0;
 	for (int i = 0; i < TRIP_FILE_SIZE; i++)
 	{
-		if (all_trips[i].leader)
-			leaderCount++;
+		Trip& t = all_trips[i];
+		if (t.actualSharing.size() > 1)
+		{
+			if (t.leader == &t)
+			{
+				sharedCount++;
+				shared << lines[i];
+			}
+		}
+		else
+		{
+			unsharedCount++;
+			unshared << lines[i];
+		}
 	}
-	cout << leaderCount << " leaders" << endl;
+	cout << "shared: " << sharedCount << endl << "unshared: " << unsharedCount << endl;
 }
 
 //Records total execution time
@@ -592,6 +608,8 @@ void timerWrapper()
 	checkTours();	
 	shareTrips2();
 	postStatistics();
+
+	tripDetailsOutput();
 
 	//tripSharingOutput(); //Output a list of each trip and the trips it's actually shared with
 

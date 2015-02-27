@@ -23,6 +23,8 @@ Max or Min
 
 string DATA_FILE = "C:\\ITS\\Output.txt";
 string TRIP_SHARING_FILE = "C:\\ITS\\TripSharing.txt";
+string SHARED_TRIPS_FILE = "C:\\ITS\\SharedTrips.txt";
+string UNSHARED_TRIPS_FILE = "C:\\ITS\\UnsharedTrips.txt";
 
 int shareable = 0;	//Trips that passed the initial checks
 int potentialSharing = 0;//Trips with at least one trip it could potentially share with	
