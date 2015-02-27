@@ -564,10 +564,13 @@ void tripDetailsOutput()
 		lines[count++] = line;
 	}
 
+	int leaderCount = 0;
 	for (int i = 0; i < TRIP_FILE_SIZE; i++)
 	{
-		//if ()
+		if (all_trips[i].leader)
+			leaderCount++;
 	}
+	cout << leaderCount << " leaders" << endl;
 }
 
 //Records total execution time
