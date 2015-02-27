@@ -526,9 +526,30 @@ void tripDetailsOutput()
 
 	ofstream shared(SHARED_TRIPS_FILE);
 	ofstream unshared(UNSHARED_TRIPS_FILE);
-
+	
 	int sharedCount = 0;
 	int unsharedCount = 0;
+	for (int i = 0; i < TRIP_FILE_SIZE; i++)
+	{
+		Trip& t = all_trips[i];
+		if (t.actualSharing)
+		{
+			if (t.actualSharing->size() > 1)
+			{
+				sharedCount += t.actualSharing->size();
+				for (int t2 : *t.actualSharing)
+				{
+					all_trips[t2].actualSharing = NULL;
+				}
+			}
+			else
+			{
+				unsharedCount++;
+				unshared << lines[i];
+			}
+		}
+	}
+	/*
 	for (int i = 0; i < TRIP_FILE_SIZE; i++)
 	{
 		Trip& t = all_trips[i];
@@ -545,7 +566,8 @@ void tripDetailsOutput()
 			unsharedCount++;
 			unshared << lines[i];
 		}
-	}	
+	}	*/
+
 	cout << "shared: " << sharedCount << endl << "unshared: " << unsharedCount << endl;
 }
 
