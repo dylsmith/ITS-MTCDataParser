@@ -159,8 +159,6 @@ void addToSharing(Trip& t1)
 				{
 					t2.actualSharing->push_back(t1.id);
 					t1.actualSharing = t2.actualSharing;
-					t1.leader = t2.leader;
-
 					if (t2.actualSharing->size() == 2 && !DoableTripModes[t2.mode])	//If we've just made these trips shareable
 					{
 						Tour& to = *all_people[t2.perid].tours[t2.tourid];
@@ -183,8 +181,6 @@ void addToSharing(Trip& t1)
 					if (joinGroup)	//if this is the first time we're in the group-forming stage
 					{
 						joinGroup = false;
-						t1.leader = &t1;
-						t2.leader = t1.leader;
 						t1.actualSharing = new list<int>();
 						t2.actualSharing = t1.actualSharing;
 						t1.actualSharing->push_back(t1.id);
@@ -209,7 +205,6 @@ void addToSharing(Trip& t1)
 						{
 							t1.actualSharing->push_back(t2id);
 							t2.actualSharing = t1.actualSharing;
-							t2.leader = t1.leader;
 						}
 
 						if (!DoableTripModes[t2.mode])
@@ -225,7 +220,6 @@ void addToSharing(Trip& t1)
 	}
 	if (t1.actualSharing == NULL)	//If we failed to find or form a group, make a solo trip
 	{
-		t1.leader = &t1;
 		t1.actualSharing = new list<int>();
 		t1.actualSharing->push_back(t1.id);
 	}
@@ -236,7 +230,6 @@ bool formGroup(Trip& t1)	//Returns true if at least one other trip is added. Wil
 {
 	if (DrivingModes[t1.mode])//If t1 can drive
 	{
-		t1.leader = &t1;
 		t1.actualSharing = new list<int>();
 		t1.actualSharing->push_back(t1.id);
 		for (int t2id : t1.potentialSharing)
@@ -244,7 +237,6 @@ bool formGroup(Trip& t1)	//Returns true if at least one other trip is added. Wil
 			Trip& t2 = all_trips[t2id];
 			if (t2.actualSharing == NULL && t2.shared && canShare(t1.actualSharing, t2))//if t2 is eligible and can share
 			{
-				t2.leader = t1.leader;
 				t1.actualSharing->push_back(t2id);
 				t2.actualSharing = t1.actualSharing;
 				if (t1.actualSharing->size() == 2 && !DoableTripModes[t1.mode])//If we've just made these trips shareable
@@ -300,8 +292,6 @@ void removeFromSharing(Trip& t1)
 				remove(*t1.actualSharing, t2id);
 				Trip& t2 = all_trips[t2id];
 				t2.actualSharing = NULL;
-				t2.leader = &t2;
-				t1.leader = &t1;
 				if (!DoableTripModes[t2.mode])
 				{
 					Tour& to2 = *all_people[t2.perid].tours[t2.tourid];
@@ -311,31 +301,24 @@ void removeFromSharing(Trip& t1)
 			}
 			else if (size > 2) //size > 2
 			{
-				if (t1.leader == &t1)
+				if (DrivingModes[t1.mode])
 				{
-					Trip* newLeader = NULL;
+					bool foundNewDriver = false;
 					for (int t2id : *t1.actualSharing)
 					{
-						if (DrivingModes[all_trips[t2id].mode])
+						Trip& t2 = all_trips[t2id];
+						if (DrivingModes[t2.mode] && t2id != t1.id)
 						{
-							newLeader = &all_trips[t2id];
+							foundNewDriver = true;
 							break;
 						}
 					}
-
-					if (!newLeader)
+					if (!foundNewDriver)
 					{
 						for (int t2id : *t1.actualSharing)
 							removeFromSharing(all_trips[t2id]);
 					}
-					else
-					{
-						for (int t2id : *t1.actualSharing)
-							all_trips[t2id].leader = newLeader;
-					}
 				}
-				else
-					t1.leader = &t1;
 
 				
 				remove(*t1.actualSharing, t1.id);
@@ -345,7 +328,6 @@ void removeFromSharing(Trip& t1)
 		}
 		else
 		{
-			t1.leader = &t1;
 			t1.actualSharing = new list<int>();
 			t1.actualSharing->push_back(t1.id);
 		}
@@ -383,7 +365,6 @@ void shareTrips()
 		Trip& t1 = all_trips[t1id];
 		if (t1.actualSharing == NULL)
 		{
-			t1.leader = &t1;
 			t1.actualSharing = new list<int>();
 			t1.actualSharing->push_back(t1id);
 		}
@@ -431,6 +412,19 @@ void shareTrips2()
 			addToSharing(t1);
 		}
 	}
+
+	for (int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
+	{
+		Trip& t1 = all_trips[t1id];
+		if (t1.leader == NULL && DrivingModes[t1.mode])
+		{
+			for (int t2id : *t1.actualSharing)
+			{
+				all_trips[t2id].leader = &t1;
+			}
+			actualSharing++;
+		}
+	}
 }
 
 //Gathers data after algorithms are finished
@@ -448,7 +442,7 @@ void postStatistics()
 		{
 			if (t.actualSharing->size() > 1)
 			{
-				actualSharing++;
+				//actualSharing++;
 				for (int k : *t.actualSharing)
 				{
 					Trip& t2 = all_trips[k];
