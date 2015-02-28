@@ -418,6 +418,7 @@ void shareTrips2()
 		Trip& t1 = all_trips[t1id];
 		if (t1.leader == NULL && DrivingModes[t1.mode])
 		{
+			t1.leader = &t1;
 			for (int t2id : *t1.actualSharing)
 			{
 				all_trips[t2id].leader = &t1;
@@ -527,15 +528,10 @@ void tripDetailsOutput()
 		Trip& t = all_trips[i];
 		if (t.actualSharing)
 		{
-			if (t.actualSharing->size() > 1)
+			if (t.leader)
 			{
-				if (DrivingModes[t.mode])
-				{
-					sharedCount += t.actualSharing->size();
-					shared << lines[i] << endl;
-					for (int t2 : *t.actualSharing)
-						all_trips[t2].actualSharing = NULL;
-				}
+				sharedCount += t.actualSharing->size();
+				shared << lines[i] << endl;
 			}
 			else
 			{
