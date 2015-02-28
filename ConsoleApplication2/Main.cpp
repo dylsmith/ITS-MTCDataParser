@@ -452,7 +452,7 @@ void postStatistics()
 				for (int k : *t.actualSharing)
 				{
 					Trip& t2 = all_trips[k];
-					if (DrivingModes[t2.mode] && t2.leader == &t2)
+					if (DrivingModes[t2.mode] && t2.leader != &t2)
 					{
 						VMTReduction += distanceBetween2(t2.origin, t2.destination);
 					}
@@ -569,6 +569,7 @@ void tripDetailsOutput()
 		}
 	}	*/
 
+
 	cout << "shared: " << sharedCount << endl << "unshared: " << unsharedCount << endl;
 }
 
@@ -617,4 +618,13 @@ int _tmain(int argc, _TCHAR* argv[])
 	return 0;
 }
 
+
+/*
+fix VMT miles
+fix shared trip output
+unify shared & unshared trip otuput
+generate trips + actual sharing sets file
+print each person and their probability data
+
+*/
 
