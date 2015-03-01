@@ -17,11 +17,12 @@ double distanceBetween(int origin, int destination)
 
 Trip::Trip()
 {
-	actualSharing = NULL;
+	group = NULL;
 	potentialSharing.reserve(4);
 	shareable = UNKNOWN;
 	shared = 1;
 	leader = NULL;
+	doable = false;
 }
 
 

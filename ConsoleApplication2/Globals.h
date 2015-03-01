@@ -34,6 +34,7 @@ extern int sharingBeforeTourLevel;//Trips that actually shared before tour-level
 extern int sharingBeforeReshare ;//Trips that actually shared before re=sharing
 extern int actualSharing;//Trips that actually shared with at least one other trip
 extern int unshared;//Trips unshared because of tour-level requirements
+extern int groups;//Numer of sharing-groups
 extern int solo;//Trips that could not be actually shared (but weren't unshared)
 extern int orphaned;//Trips that were sharing with a trip that was unshared, and now are not sharing
 extern double VMTReduction; //Vehicle miles saved

@@ -32,6 +32,7 @@ int sharingBeforeTourLevel = 0;//Trips that actually shared before tour-level ch
 int sharingBeforeReshare = 0;//Trips that actually shared before re=sharing
 int actualSharing = 0;//Trips that actually shared with at least one other trip
 int unshared = 0;//Trips unshared because of tour-level requirements
+int groups = 0;//Number of sharing-groups
 int solo = 0;//Trips that could not be actually shared (but weren't unshared)
 int orphaned = 0;//Trips that were sharing with a trip that was unshared, and now are not sharing
 double VMTReduction = 0; //Vehicle miles saved
@@ -67,7 +68,7 @@ string TRIP_FILE = "C:\\ITS\\indivTripData_3.csv";*/
 string DISTANCE_FILE = "D:\\Farzad\\ridesharing\\sample data\\DistanceSkimsDatabaseAM.csv";
 string PERSON_FILE = "D:\\Farzad\\ridesharing\\sample data\\personFile.p2011s3a.2010.csv";
 string TOUR_FILE = "D:\\Farzad\\ridesharing\\sample data\\indivTourData_3.csv";
-string TRIP_FILE = "D:\\Farzad\\ridesharing\\sample data\\indivTripData_3.csv";
+string TRIP_FILE = "D:\\Farzad\\ridesharing\\sample data\\indivTripData_32.csv";
 
 
 //Count the number of files automatically

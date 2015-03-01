@@ -9,10 +9,6 @@
 using namespace std;
 
 
-double distanceBetween2(int origin, int destination)
-{
-	return dist[((origin - 1) * NUM_LOCATIONS) + (destination - 1)];
-}
 
 void parseClosePoints()
 {
@@ -146,6 +142,8 @@ void parseTrips()
 		trip.mode = q.parseInt();
 		all_trips[i].id = i;
 
+		if (DoableTripModes[trip.mode])
+			trip.doable = true;
 		if (trip.isShareable())
 		{
 			organized[trip.hour][trip.origin][trip.destination].push_back(&all_trips[i]);
