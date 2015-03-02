@@ -24,9 +24,8 @@ Max or Min
 */
 
 extern string DATA_FILE;
+extern string NEW_TRIP_FILE;
 extern string TRIP_SHARING_FILE;
-extern string SHARED_TRIPS_FILE;
-extern string UNSHARED_TRIPS_FILE;
 
 extern int shareable;	//Trips that passed the initial checks
 extern int potentialSharing;//Trips with at least one trip it could potentially share with	

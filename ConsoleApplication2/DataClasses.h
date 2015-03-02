@@ -11,6 +11,7 @@
 #include <iostream>
 using namespace std;
 
+
 class VGroup;
 struct Trip
 {
@@ -26,18 +27,17 @@ struct Trip
 	string purpose;
 
 	vector<int> potentialSharing;
-	//vector<int>* actualSharing;
 	VGroup* group;
 
 	bool doable;
-	int shareable; //1 = yes, 0 = no, -1 = unknown. potential shareability
-	bool shared; //set to 0 if unshared by tour-level decisions
-	Trip* leader;
+	bool shared; //set to 0 if unshared by tour-level decisionss
 
 	Trip();
 
 	bool isShareable();
-	void setDoable(bool set);
+	void setDoable(bool set, bool recheckTour = true);
+private:
+	int shareable; //1 = yes, 0 = no, -1 = unknown. potential shareability
 };
 
 
