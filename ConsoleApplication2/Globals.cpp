@@ -6,9 +6,13 @@
 
 using namespace std;
 
-string DATA_FILE = "C:\\ITS\\Output.txt";//Important data points written here
+string DATA_FILE = "C:\\ITS\\DataPoints.txt";//Important data points written here
 string TRIP_SHARING_FILE = "C:\\ITS\\TripSharing.txt";//Each tripid and its actual sharing list will be written to this file
-string NEW_TRIP_FILE = "C:\\ITS\\TripsOutput.txt";	//Shared trips will be merged, unshared trips left intact, and written to this
+bool WriteTripSharing = true;
+string TRIP_DETAILS_FILE = "C:\\ITS\\TripDetails.csv";	//Shared trips will be merged, unshared trips left intact, and written to this
+bool WriteTripDetails = true;
+string SHARED_DETAILS_FILE = "C:\\ITS\\SharedTripDetails.csv";
+string UNSHARED_DETAILS_FILE = "C:\\ITS\\UnsharedTripDetails.csv";;
 
 
 //Sharing algorithm variables:
@@ -22,11 +26,13 @@ int DrivingModes[] = { 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 int DoableTripModes[] = { 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0 };  //These modes do not require the trip to be shared for it to be doable
 
 //Trip sharing requirements:  (ordered by computational complexity)
-int MaxNumStops = 6;	//Number of stops must be this or more
+
+double CLOSE_DISTANCE = 1.0;	//Two points must be within this to be considered closePoints. Make sure to update vector reserve() calls when changing this
+int MaxNumStops = 6;	//Number of stops must be less than or equal to this
 int MaxIncome = 200000; //Income must be below this
-float MinDistanceTraveled = 1.0;	//Distance between origin and dest. must be above this
+float MinDistanceTraveled = 2.5;	//Distance between origin and dest. must be above this
 int TripModes[] = { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }; //1 represents that array index is shareable. Right now, indexes modes 1-7 (and not 0) are shareable
-unsigned int RandomFailChance = 0; //%chance a trip will randomly not be shareable. This should be an integer from 0-100 
+unsigned int RandomFailChance = 20; //%chance a trip will randomly not be shareable. This should be an integer from 0-100 
 set<string> TripPurposes = { "Home", "work_low", "work_med", "work_high", "work_very high", "university", "school_high", "school_grade", "atwork_business", "atwork_eat", "atwork_maint", \
 "eatout", "escort_kids", "escort_no kids", "othdiscr", "othmaint", "shopping", "social" }; //Simply list acceptable purposes here
 
@@ -44,7 +50,6 @@ string TOUR_FILE = "D:\\Farzad\\ridesharing\\sample data\\indivTourData_3.csv";
 string TRIP_FILE = "D:\\Farzad\\ridesharing\\sample data\\indivTripData_32.csv";
 
 
-double CLOSE_DISTANCE = 1.0;	//Two points must be within this to be considered closePoints. Make sure to update vector reserve() calls when changing this
 int NUM_LOCATIONS = 1454;		//Number of locations in the simulation
 int DISTANCE_FILE_SIZE = NUM_LOCATIONS * NUM_LOCATIONS;
 

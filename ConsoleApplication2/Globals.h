@@ -11,8 +11,12 @@
 using namespace std;
 
 extern string DATA_FILE;
-extern string NEW_TRIP_FILE;
+extern string TRIP_DETAILS_FILE;
+extern bool WriteTripDetails;
 extern string TRIP_SHARING_FILE;
+extern bool WriteTripSharing;
+extern string SHARED_DETAILS_FILE;
+extern string UNSHARED_DETAILS_FILE;
 
 
 //Sharing algorithm variables:

@@ -32,6 +32,7 @@ bool VGroup::canAddTrip(Trip& t2)
 		return(numPassengers >= MinPeople && numPassengers <= MaxPeople);
 
 }
+//Try to avoid sharing drivers initially
 
 void VGroup::addTrip(Trip& t2, bool recheckTour)
 {
@@ -43,6 +44,8 @@ void VGroup::addTrip(Trip& t2, bool recheckTour)
 	t2.group = this;
 
 }
+
+
 
 void VGroup::removeTrip(Trip& t1)
 {
@@ -76,7 +79,7 @@ void VGroup::removeTrip(Trip& t1)
 
 			//Try to find a new driver for the group, if t1 was the old driver
 			bool foundNewDriver = false;
-			if (wasLeader) //TODO: this is the last change before final commit. make sure it works!
+			if (wasLeader)
 			{
 				for (Trip* t2 : group->trips)
 				{

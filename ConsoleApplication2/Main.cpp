@@ -217,7 +217,7 @@ void checkTours()
 		checkTour(all_tours[i]);
 
 	//If we have unshared items
-	if (prevUnshared != unshared)
+	if (prevUnshared != unshared)	//Repeat until convergence
 	{
 		delete ti;
 		cout << unshared - prevUnshared << " unshared. Going again: " << endl;
@@ -286,10 +286,46 @@ void shareTrips2()
 	}
 }
 
+void countMiles()
+{
+	double miles = 0;
+	double miles2 = 0;
+	double totalMiles = 0;
+	for (int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
+	{
+		Trip& t = all_trips[t1id];
+
+		totalMiles += distanceBetween(t.origin, t.destination);
+		miles += distanceBetween(t.origin, t.destination);
+		if (t.group)
+		{
+
+			if (t.group->leader == &t)
+			{
+				int driving = 0;
+				for (Trip* t2 : t.group->trips)
+				{
+					if (t2->group->leader != t2 && DrivingModes[t2->mode])
+					{
+						driving++;
+					}
+				}
+				miles2 += driving * distanceBetween(t.origin, t.destination);
+			}
+		}
+	}
+	miles /= TRIP_FILE_SIZE;
+	cout << "Total vehicle miles traveled (by all trips): " << totalMiles << endl;
+	cout << "Average trip length: " << miles << endl;
+	cout << "VMT, if all non-leaders would have driven the same length as the leader: " << miles2 << endl;
+}
+
 //Gathers data points after algorithms are finished
 void postStatistics()
 {
 	Timer ti("Writing output.txt");
+
+	int actualSharing2 = 0;
 	for (int i = 0; i < TRIP_FILE_SIZE; i++)
 	{
 		Trip& t = all_trips[i];
@@ -300,10 +336,18 @@ void postStatistics()
 		{
 			if (t.group->trips.size() > 1) //if t is sharing with others
 			{
+				actualSharing++;
+				if (t.group->leader == &t)
+				{
+					actualSharing2 += t.group->trips.size();
+					groups++;
+				}
+
 				for (Trip* t2 : t.group->trips) //for each shared trip
 				{
 					if (DrivingModes[t2->mode] && t2->group->leader != t2) //If t2 is a driver and not a leader
 					{
+						//TODO: include leader's driving distance to pick up everyone
 						VMTReduction += distanceBetween(t2->origin, t2->destination); //Add its distance to saved VMT count
 					}
 				}
@@ -328,12 +372,14 @@ void postStatistics()
 		outf << "Minimizing group size" << endl;
 
 	outf << "Total trips: " << TRIP_FILE_SIZE << endl;
-	outf << "Shareable trips: " << shareable << endl;
+	outf << "Shareable trips (precondition): " << shareable << endl;
 	outf << "Trips with at least one potentially shared trip: " << potentialSharing << endl;
 	outf << "Trips with at least one actually shared trip (before tour-level checks): " << sharingBeforeTourLevel << endl;
 	outf << "Trips with at least one actually shared trip (before re-sharing): " << sharingBeforeReshare << endl;
-	outf << "Trips with at least one actually shared trip: " << actualSharing << endl;
+	outf << "Final trips with at least one actually shared trip: " << actualSharing << endl;
+	outf << "Sum of each leader's group size, if sharing: " << actualSharing2 << " (should be the same as above)" << endl;
 	outf << "Trips with no actually shared trips: " << solo << endl;
+	outf << "Solo trips + shared trips: " << solo + actualSharing << " (should equal " << TRIP_FILE_SIZE << ")" << endl;
 	outf << "Total sharing groups: " << groups << endl;
 	outf << "Trips unshared at the tour-level: " << unshared << endl;
 	outf << "Orphaned trips (should be 0): " << orphaned << endl;
@@ -352,6 +398,8 @@ void tripSharingOutput()
 		if (all_trips[t1id].group)
 			for (Trip* t2 : all_trips[t1id].group->trips)
 				outf << ',' << t2->id;
+		//TODO: add number of passengers here, second column
+		//TODO: write perid, tourid, tripid, numpassengers, (actualy sharing set, separated by spaces)
 	}
 	outf << '\n';
 }
@@ -365,7 +413,15 @@ void tripDetailsOutput()
 	string* lines;
 	lines = new string[TRIP_FILE_SIZE];
 	string line;
-	getline(inf, line);	//Skip header
+	getline(inf, line);	///Read Header
+
+	ofstream outf(TRIP_DETAILS_FILE);
+	ofstream shared(SHARED_DETAILS_FILE);
+	ofstream unshared(UNSHARED_DETAILS_FILE);
+	outf << line << endl;
+	shared << line << endl;
+	unshared << line << endl;
+
 	int count = 0;
 	for (int i = 0; i < TRIP_FILE_SIZE; i++)
 	{
@@ -373,8 +429,6 @@ void tripDetailsOutput()
 		lines[count] = line;
 		++count;
 	}
-
-	ofstream outf(NEW_TRIP_FILE);
 
 	for (int i = 0; i < TRIP_FILE_SIZE; i++)
 	{
@@ -390,62 +444,19 @@ void tripDetailsOutput()
 						numPassengers += t2->numPassengers;
 					
 					//Write line to file, changing trip size and mode to numPassengers and 5
-					outf << lineModify(lines[i], to_string(numPassengers), "5") << endl;	
+					string line = lineModify(lines[i], to_string(numPassengers), "5");
+					outf << line << endl;
+					shared << line << endl;
 				}
 			}
 			else //if trip is not sharing with others
 			{
 				outf << lines[i] << endl;	//Write line to file normally
+				unshared << lines[i] << endl;
 			}
 		} //if t.group
 	} //for each trip
 }
-
-
-
-void generateLeaders(bool clearAfter = false)
-{
-	int actualSharing2 = 0;
-	for (int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
-	{
-		Trip& t1 = all_trips[t1id];
-		if (t1.group != NULL)
-		{
-			if (t1.group->trips.size() > 1)
-			{
-				actualSharing++;//maybe try deleting the group after adding trips.size to ensure we've added exactly all the groups once
-				if (t1.group->leader == &t1)
-				{
-					actualSharing2 += t1.group->trips.size();
-					groups++;
-				}
-			}
-			//if (find(t1.group->trips.begin(), t1.group->trips.end(), &t1) == t1.group->trips.end())
-			//list<Trip*>::iterator matching_iter = find_if(t1.group->trips.begin(), t1.group->trips.end(), bind1st(pointee_is_equal, &t1))
-			//cout << t1id << " was not in its actualsharing set." << endl;
-		}
-	}
-	/*
-	for (int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
-	{
-	Trip& t1 = all_trips[t1id];
-	remove(*t1.actualSharing, t1.id);
-	}
-	for (int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
-	{
-	Trip& t1 = all_trips[t1id];
-	if (t1.actualSharing->size() > 0)
-	cout << t1id << " had extra elements in its sharing list" << endl;
-	}*/
-	cout << "1: " << actualSharing << "   2: " << actualSharing2 << endl;
-
-	if (clearAfter)
-	{
-		actualSharing = 0;
-		groups = 0;
-	}
-}
-
 
 //Records total execution time
 void timerWrapper()
@@ -462,23 +473,18 @@ void timerWrapper()
 	analyzeTrips();
 
 
+
 	shareTrips();
 	checkTours();	
 	shareTrips2();
-	generateLeaders();
-	postStatistics();
 
-	tripDetailsOutput();
+	countMiles();
+	postStatistics();	//DataPoints.txt - shared trip counts, etc.
+	if (WriteTripDetails)
+		tripDetailsOutput(); //TripsOutput.txt - each trip's full details, after sharing
 
-	//tripSharingOutput(); //Output a list of each trip and the trips it's actually shared with
-
-	//output a .csv with all shared drivers' trip info and one with unsharedtrips
-	//output a list of all shared people
-	//output a list of all trips
-
-
-
-
+	if (WriteTripSharing)
+		tripSharingOutput(); //TripSharing.txt - each trip's actual sharing list
 }
 
 //Main
