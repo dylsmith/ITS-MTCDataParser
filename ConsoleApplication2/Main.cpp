@@ -51,6 +51,7 @@ void analyzeTrips()
 	long long int sharedtrips = 0;
 	for (int hour = 5; hour < 24; hour++)
 	{
+		cout << (double)(hour - 5) / 19 << "% done" << endl;
 		for (int origin = 1; origin <= NUM_LOCATIONS; origin++)
 		{
 			for (int destination = 1; destination <= NUM_LOCATIONS; destination++)
