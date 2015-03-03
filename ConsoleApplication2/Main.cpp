@@ -401,6 +401,52 @@ void tripDetailsOutput()
 	} //for each trip
 }
 
+
+
+void generateLeaders(bool clearAfter = false)
+{
+	int actualSharing2 = 0;
+	for (int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
+	{
+		Trip& t1 = all_trips[t1id];
+		if (t1.group != NULL)
+		{
+			if (t1.group->trips.size() > 1)
+			{
+				actualSharing++;//maybe try deleting the group after adding trips.size to ensure we've added exactly all the groups once
+				if (t1.group->leader == &t1)
+				{
+					actualSharing2 += t1.group->trips.size();
+					groups++;
+				}
+			}
+			//if (find(t1.group->trips.begin(), t1.group->trips.end(), &t1) == t1.group->trips.end())
+			//list<Trip*>::iterator matching_iter = find_if(t1.group->trips.begin(), t1.group->trips.end(), bind1st(pointee_is_equal, &t1))
+			//cout << t1id << " was not in its actualsharing set." << endl;
+		}
+	}
+	/*
+	for (int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
+	{
+	Trip& t1 = all_trips[t1id];
+	remove(*t1.actualSharing, t1.id);
+	}
+	for (int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
+	{
+	Trip& t1 = all_trips[t1id];
+	if (t1.actualSharing->size() > 0)
+	cout << t1id << " had extra elements in its sharing list" << endl;
+	}*/
+	cout << "1: " << actualSharing << "   2: " << actualSharing2 << endl;
+
+	if (clearAfter)
+	{
+		actualSharing = 0;
+		groups = 0;
+	}
+}
+
+
 //Records total execution time
 void timerWrapper()
 {
