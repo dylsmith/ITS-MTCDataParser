@@ -11,6 +11,37 @@
 using namespace std;
 
 
+string lineModify(string input, string numPassengers, string mode)
+{
+	int commas = 0;
+	int loc = -1;
+	int start, end;
+		//TODO: remove this
+	while (commas != 2)
+		if (input[++loc] == ',')
+			commas++;
+	start = loc;
+	while (commas != 3)
+		if (input[++loc] == ',')
+			commas++;
+	end = loc;
+
+	input = input.substr(0, start + 1) + numPassengers + input.substr(end, input.size() - end);
+
+	commas = 0;
+	loc = -1;
+	while (commas != 15)
+		if (input[++loc] == ',')
+			commas++;
+	start = loc;
+	while (commas != 16)
+		if (input[++loc] == ',')
+			commas++;
+	end = loc;
+
+	return input.substr(0, start + 1) + mode + input.substr(end, input.size() - end);
+}
+
 double distanceBetween(int origin, int destination)
 {
 	return dist[((origin - 1) * NUM_LOCATIONS) + (destination - 1)];
@@ -20,7 +51,8 @@ bool strictCompare(Trip& t1, Trip& t2)
 {
 	return (distanceBetween(t1.origin, t2.origin) < CLOSE_DISTANCE &&
 		distanceBetween(t1.destination, t2.destination) < CLOSE_DISTANCE &&
-		t1.perid != t2.perid);
+		t1.perid != t2.perid &&
+		t1.hour == t2.hour);
 }
 
 void OMPInfo()

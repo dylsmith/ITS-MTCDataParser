@@ -72,6 +72,7 @@ void parsePeople()
 		all_people[perid].id = perid;
 	}
 }
+
 void parseTours()
 {
 	QuickParser q(TOUR_FILE);
@@ -105,6 +106,8 @@ void parseTours()
 		all_people[perid].tours[tourid] = &all_tours[i];
 	}
 }
+
+
 void parseTrips()
 {
 	QuickParser q(TRIP_FILE);
@@ -115,7 +118,7 @@ void parseTrips()
 		for (int k = 1; k <= NUM_LOCATIONS; k++)
 		{
 			organized[i][k] = new vector<Trip*>[NUM_LOCATIONS + 1];
-			organized[i][k]->reserve(70);
+			organized[i][k]->reserve(120);
 		}
 	}
 
@@ -127,7 +130,8 @@ void parseTrips()
 
 		q.parseComma();
 		trip.perid = q.parseInt();
-		trip.numPassengers = q.parseInt();
+		trip.numPassengers = 1;
+		q.parseComma();
 		trip.tourid = q.parseInt();
 		q.parseComma();
 		q.parseComma();

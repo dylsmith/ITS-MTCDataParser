@@ -17,7 +17,7 @@ Trip::Trip()
 {
 	group = NULL;
 	potentialSharing.reserve(4);
-	shareable = UNKNOWN;
+	shareable = -1;
 	shared = 1;
 	doable = false;
 }
@@ -26,7 +26,7 @@ Trip::Trip()
 bool Trip::isShareable()
 {
 
-	if (shareable == UNKNOWN)
+	if (shareable == -1)
 		shareable = (
 		all_people[perid].tours[tourid]->numStops <= MaxNumStops &&		//Number of stops
 		distanceBetween(origin, destination) > MinDistanceTraveled &&	//Trip length
@@ -52,7 +52,7 @@ void Trip::setDoable(bool set, bool recheckTour)
 			reCheckTour(to);
 		}
 	}
-	else if (set == false && doable == true)//if we're makinga trip not doable
+	else if (set == false && doable == true)//if we're making the trip not doable
 	{
 		if (!DoableTripModes[mode])
 		{
@@ -72,7 +72,6 @@ void Trip::setDoable(bool set, bool recheckTour)
 Tour::Tour()
 {
 	trips.reserve(5);
-	doableTripCount = 0;
 	shared = 1;
 }
 
