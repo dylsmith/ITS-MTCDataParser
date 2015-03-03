@@ -513,7 +513,6 @@ void timerWrapper()
 
 
 	shareTrips();
-	//generateLeaders();
 	checkTours();	
 	shareTrips2();
 	generateLeaders();
