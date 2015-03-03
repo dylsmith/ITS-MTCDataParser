@@ -15,6 +15,7 @@ using namespace std;
 class VGroup;
 struct Trip
 {
+	//vars from file:
 	int id;
 	int perid;
 	int tourid;
@@ -22,44 +23,44 @@ struct Trip
 	int destination;
 	int hour;
 	int numPassengers;
-
 	int mode;
 	string purpose;
 
+	//generated vars:
 	vector<int> potentialSharing;
 	VGroup* group;
-
 	bool doable;
-	bool shared; //set to 0 if unshared by tour-level decisionss
+	bool shared; 
 
 	Trip();
-
 	bool isShareable();
 	void setDoable(bool set, bool recheckTour = true);
+
 private:
 	int shareable; //1 = yes, 0 = no, -1 = unknown. potential shareability
 };
 
-
-
 struct Tour
 {
+	//vars from file:
 	int id;
 	int hhid;
 	int numStops;
+
+	//generated vars:
 	vector<Trip*> trips;
 	bool shared;
-
-	int doableTripCount;
-
+	
 	Tour();
 };
 
-//Tourids are ordered 0-5, or 11 for an optional at-work lunch trip for some odd reason
 struct Person
 {	
+	//vars from file:
 	int id;
 	int income;
+
+	//generated vars:
 	map<int, Tour*> tours;
 
 	Person();

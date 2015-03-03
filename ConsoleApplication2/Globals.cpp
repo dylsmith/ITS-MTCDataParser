@@ -1,5 +1,3 @@
-
-//#include "DataClasses.h"
 #include "stdafx.h"
 #include <set>
 #include <string>
@@ -8,36 +6,13 @@
 
 using namespace std;
 
-/*
-log file:
-Max or Min
-# of trips
-# valid trpis
-# of trips with nonzero potential sharing
-# o frips with nonzero actual sharing
-# of trips removed at tour level
-# of trips orphaned at tour level
-# of orphaned trips re-added //this will loop until 5%
-//VMT reduction
-*/
-
 string DATA_FILE = "C:\\ITS\\Output.txt";//Important data points written here
 string TRIP_SHARING_FILE = "C:\\ITS\\TripSharing.txt";//Each tripid and its actual sharing list will be written to this file
 string NEW_TRIP_FILE = "C:\\ITS\\TripsOutput.txt";	//Shared trips will be merged, unshared trips left intact, and written to this
 
-int shareable = 0;	//Trips that passed the initial checks
-int potentialSharing = 0;//Trips with at least one trip it could potentially share with	
-int sharingBeforeTourLevel = 0;//Trips that actually shared before tour-level checks
-int sharingBeforeReshare = 0;//Trips that actually shared before re=sharing
-int actualSharing = 0;//Trips that actually shared with at least one other trip
-int unshared = 0;//Trips unshared because of tour-level requirements
-int groups = 0;//Number of sharing-groups
-int solo = 0;//Trips that could not be actually shared (but weren't unshared)
-int orphaned = 0;//Trips that were sharing with a trip that was unshared, and now are not sharing
-double VMTReduction = 0; //Vehicle miles saved
 
 //Sharing algorithm variables:
-bool Maximize = true;
+bool Maximize = true; //TODO: False not yet implemented
 int MinPeople = 2;	//If minizing, all groups must be at least this big
 int MaxPeople = 5;	//If maximizing, all groups cannot be larger than that
 
@@ -45,7 +20,6 @@ int MaxPeople = 5;	//If maximizing, all groups cannot be larger than that
 float TourDoableRequirement = 0.5;	//For some legs of a tour to be shared, at least this percent must be doable 
 int DrivingModes[] = { 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; //Each ridesharing group must have one person whose mode is one of these
 int DoableTripModes[] = { 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0 };  //These modes do not require the trip to be shared for it to be doable
-
 
 //Trip sharing requirements:  (ordered by computational complexity)
 int MaxNumStops = 6;	//Number of stops must be this or more
@@ -70,7 +44,6 @@ string TOUR_FILE = "D:\\Farzad\\ridesharing\\sample data\\indivTourData_3.csv";
 string TRIP_FILE = "D:\\Farzad\\ridesharing\\sample data\\indivTripData_32.csv";
 
 
-//Count the number of files automatically
 double CLOSE_DISTANCE = 1.0;	//Two points must be within this to be considered closePoints. Make sure to update vector reserve() calls when changing this
 int NUM_LOCATIONS = 1454;		//Number of locations in the simulation
 int DISTANCE_FILE_SIZE = NUM_LOCATIONS * NUM_LOCATIONS;
@@ -95,12 +68,16 @@ bool close[1455][1455];
 vector<Trip*>* organized[24][1455];
 float* dist;
 
-//Outdated
-#define NOT_SHAREABLE 0
-#define SHAREABLE 1
-#define UNKNOWN -1
-#define BEING_SHARED 2
-#define SOLO 3
-#define FOLLOWER 4
-#define LEADER 5
+int shareable = 0;	//Trips that passed the initial checks
+int potentialSharing = 0;//Trips with at least one trip it could potentially share with	
+int sharingBeforeTourLevel = 0;//Trips that actually shared before tour-level checks
+int sharingBeforeReshare = 0;//Trips that actually shared before re=sharing
+int actualSharing = 0;//Trips that actually shared with at least one other trip
+int unshared = 0;//Trips unshared because of tour-level requirements
+int groups = 0;//Number of sharing-groups
+int solo = 0;//Trips that could not be actually shared (but weren't unshared)
+int orphaned = 0;//Trips that were sharing with a trip that was unshared, and now are not sharing
+double VMTReduction = 0; //Vehicle miles saved
+
+
 

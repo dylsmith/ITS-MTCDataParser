@@ -28,17 +28,7 @@ inline int QuickParser::parseInt()
 
 inline char* QuickParser::parseString()
 {
-	/*
-	int i = 0;
-	while ((loc)[++i] != ',' && (loc)[i] != '\n');
-	char* ret = new char[i + 1];
-	memcpy(ret, loc, i);
-	ret[i] = '\0';
-	loc += i + 1;
-	return ret;*/
-	
-
-
+	//Parses one string and moves loc accordingly. Somehow.
 	int i = 1;
 	while (loc[i] != ',' && loc[i] != '\n'&& loc[i] != '\r')
 		++i;
@@ -48,7 +38,4 @@ inline char* QuickParser::parseString()
 	ret[i-1] = '\0';
 	loc += (i - 1);
 	return ret;
-
-	//i = length of str + 1
-	//loc points to 
 }

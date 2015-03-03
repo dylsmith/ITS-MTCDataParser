@@ -10,33 +10,10 @@
 
 using namespace std;
 
-/*
-log file:
-Max or Min
-# of trips
-# valid trpis
-# of trips with nonzero potential sharing
-# o frips with nonzero actual sharing
-# of trips removed at tour level
-# of trips orphaned at tour level
-# of orphaned trips re-added //this will loop until 5%
-//VMT reduction
-*/
-
 extern string DATA_FILE;
 extern string NEW_TRIP_FILE;
 extern string TRIP_SHARING_FILE;
 
-extern int shareable;	//Trips that passed the initial checks
-extern int potentialSharing;//Trips with at least one trip it could potentially share with	
-extern int sharingBeforeTourLevel;//Trips that actually shared before tour-level checks
-extern int sharingBeforeReshare ;//Trips that actually shared before re=sharing
-extern int actualSharing;//Trips that actually shared with at least one other trip
-extern int unshared;//Trips unshared because of tour-level requirements
-extern int groups;//Numer of sharing-groups
-extern int solo;//Trips that could not be actually shared (but weren't unshared)
-extern int orphaned;//Trips that were sharing with a trip that was unshared, and now are not sharing
-extern double VMTReduction; //Vehicle miles saved
 
 //Sharing algorithm variables:
 extern bool Maximize;
@@ -84,15 +61,16 @@ extern vector<short>* closePoints;
 extern bool close[1455][1455];
 extern vector<Trip*>* organized[24][1455];
 extern float* dist;
-
-//Outdated
-#define NOT_SHAREABLE 0
-#define SHAREABLE 1
-#define UNKNOWN -1
-#define BEING_SHARED 2
-#define SOLO 3
-#define FOLLOWER 4
-#define LEADER 5
+extern int shareable;	//Trips that passed the initial checks
+extern int potentialSharing;//Trips with at least one trip it could potentially share with	
+extern int sharingBeforeTourLevel;//Trips that actually shared before tour-level checks
+extern int sharingBeforeReshare;//Trips that actually shared before re=sharing
+extern int actualSharing;//Trips that actually shared with at least one other trip
+extern int unshared;//Trips unshared because of tour-level requirements
+extern int groups;//Numer of sharing-groups
+extern int solo;//Trips that could not be actually shared (but weren't unshared)
+extern int orphaned;//Trips that were sharing with a trip that was unshared, and now are not sharing
+extern double VMTReduction; //Vehicle miles saved
 
 
 #endif

@@ -1,6 +1,5 @@
 #include "stdafx.h"
 
-
 #include "Globals.h"
 #include "DataClasses.h"
 #include "FastRand.h"
@@ -45,7 +44,7 @@ inline bool compareTrips(Trip& trip1, Trip& trip2)
 //Parses the sorted trips, builds potential sharing lists
 void analyzeTrips()
 {
-	//For each hour
+	//For each trip, add other trips with the same hour and similar OD pairs to potential sharing
 	Timer ct("Analyzing trips");
 
 	long long int sharedtrips = 0;

@@ -115,7 +115,7 @@ void parseTrips()
 		for (int k = 1; k <= NUM_LOCATIONS; k++)
 		{
 			organized[i][k] = new vector<Trip*>[NUM_LOCATIONS + 1];
-			organized[i][k]->reserve(70);
+			organized[i][k]->reserve(120);
 		}
 	}
 
