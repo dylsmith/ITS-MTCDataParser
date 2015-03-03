@@ -74,9 +74,9 @@ string TRIP_FILE = "D:\\Farzad\\ridesharing\\sample data\\indivTripData_3.csv";
 double CLOSE_DISTANCE = 1.0;	//Two points must be within this to be considered closePoints. Make sure to update vector reserve() calls when changing this
 int NUM_LOCATIONS = 1454;		//Number of locations in the simulation
 int DISTANCE_FILE_SIZE = NUM_LOCATIONS * NUM_LOCATIONS;
-int PERSON_FILE_SIZE = lineCount(PERSON_FILE) - 1;//7053334
-int TOUR_FILE_SIZE = lineCount(TOUR_FILE) - 1;//8914778
-int TRIP_FILE_SIZE = lineCount(TRIP_FILE) - 1;//22811684
+int PERSON_FILE_SIZE;// = lineCount(PERSON_FILE) - 1;//7053334
+int TOUR_FILE_SIZE;// = lineCount(TOUR_FILE) - 1;//8914778
+int TRIP_FILE_SIZE;// = lineCount(TRIP_FILE) - 1;//22811684
 
 
 struct Tour; struct Trip; struct Person;
@@ -86,8 +86,8 @@ Person* all_people;
 Tour* all_tours;
 Trip* all_trips;
 vector<short>* closePoints;
-bool close[1455][1455];
-vector<Trip*>* organized[24][1455];
+bool close[1][1455];// [1455][1455];
+vector<Trip*>* organized[1][1455];// [24][1455];
 float* dist;
 
 //Outdated

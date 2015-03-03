@@ -301,13 +301,13 @@ void removeFromSharing(Trip& t1)
 			}
 			else if (size > 2) //size > 2
 			{
+				remove(*t1.actualSharing, t1.id);
 				if (DrivingModes[t1.mode])
 				{
 					bool foundNewDriver = false;
 					for (int t2id : *t1.actualSharing)
 					{
-						Trip& t2 = all_trips[t2id];
-						if (DrivingModes[t2.mode] && t2id != t1.id)
+						if (DrivingModes[all_trips[t2id].mode])
 						{
 							foundNewDriver = true;
 							break;
@@ -318,10 +318,8 @@ void removeFromSharing(Trip& t1)
 						for (int t2id : *t1.actualSharing)
 							removeFromSharing(all_trips[t2id]);
 					}
-				}
+				}				
 
-				
-				remove(*t1.actualSharing, t1.id);
 				t1.actualSharing = new list<int>();
 				t1.actualSharing->push_back(t1.id);
 			}
@@ -599,10 +597,50 @@ void timerWrapper()
 //output: trip (split by sharing and not sharing)
 
 //Main
+
+string lineModifyTest(string input)
+{
+	int commas = 0;
+	int start, end;
+	int loc = -1;
+	while (commas != 15)
+	{
+		if (input[++loc] == ',')
+			commas++;
+	}
+	start = loc;
+	while (commas != 16)
+	{
+		if (input[++loc] == ',')
+			commas++;
+	}
+	end = loc;
+
+	//return input;
+	return input.substr(0, start + 1) + "test" + input.substr(end, input.size() - end );
+}
+
+void test()
+{
+	cout << "Start" << endl;
+	ifstream fin("C:\\ITS\\indivTripData_3.csv");
+	cout << "Read" << endl;
+	string line;
+	getline(fin, line);
+	for (int i = 0; i < 10; i++)
+	{
+		cout << "line" << endl;
+		getline(fin, line);
+		//cout << line << endl;
+		cout << lineModifyTest(line) << endl;
+		cout << "linedone" << endl;
+	}
+
+}
 int _tmain(int argc, _TCHAR* argv[])
 {
-	timerWrapper();
-	
+	//timerWrapper();
+	test();
 	cout << "Finished." << endl;
 	pause();
 	return 0;
