@@ -21,10 +21,9 @@ Max or Min
 //VMT reduction
 */
 
-string DATA_FILE = "C:\\ITS\\Output.txt";
-string TRIP_SHARING_FILE = "C:\\ITS\\TripSharing.txt";
-string SHARED_TRIPS_FILE = "C:\\ITS\\SharedTrips.txt";
-string UNSHARED_TRIPS_FILE = "C:\\ITS\\UnsharedTrips.txt";
+string DATA_FILE = "C:\\ITS\\Output.txt";//Important data points written here
+string TRIP_SHARING_FILE = "C:\\ITS\\TripSharing.txt";//Each tripid and its actual sharing list will be written to this file
+string NEW_TRIP_FILE = "C:\\ITS\\TripsOutput.txt";	//Shared trips will be merged, unshared trips left intact, and written to this
 
 int shareable = 0;	//Trips that passed the initial checks
 int potentialSharing = 0;//Trips with at least one trip it could potentially share with	
@@ -32,6 +31,7 @@ int sharingBeforeTourLevel = 0;//Trips that actually shared before tour-level ch
 int sharingBeforeReshare = 0;//Trips that actually shared before re=sharing
 int actualSharing = 0;//Trips that actually shared with at least one other trip
 int unshared = 0;//Trips unshared because of tour-level requirements
+int groups = 0;//Number of sharing-groups
 int solo = 0;//Trips that could not be actually shared (but weren't unshared)
 int orphaned = 0;//Trips that were sharing with a trip that was unshared, and now are not sharing
 double VMTReduction = 0; //Vehicle miles saved
@@ -67,17 +67,22 @@ string TRIP_FILE = "C:\\ITS\\indivTripData_3.csv";*/
 string DISTANCE_FILE = "D:\\Farzad\\ridesharing\\sample data\\DistanceSkimsDatabaseAM.csv";
 string PERSON_FILE = "D:\\Farzad\\ridesharing\\sample data\\personFile.p2011s3a.2010.csv";
 string TOUR_FILE = "D:\\Farzad\\ridesharing\\sample data\\indivTourData_3.csv";
-string TRIP_FILE = "D:\\Farzad\\ridesharing\\sample data\\indivTripData_3.csv";
+string TRIP_FILE = "D:\\Farzad\\ridesharing\\sample data\\indivTripData_32.csv";
 
 
 //Count the number of files automatically
 double CLOSE_DISTANCE = 1.0;	//Two points must be within this to be considered closePoints. Make sure to update vector reserve() calls when changing this
 int NUM_LOCATIONS = 1454;		//Number of locations in the simulation
 int DISTANCE_FILE_SIZE = NUM_LOCATIONS * NUM_LOCATIONS;
-int PERSON_FILE_SIZE;// = lineCount(PERSON_FILE) - 1;//7053334
-int TOUR_FILE_SIZE;// = lineCount(TOUR_FILE) - 1;//8914778
-int TRIP_FILE_SIZE;// = lineCount(TRIP_FILE) - 1;//22811684
 
+int PERSON_FILE_SIZE = lineCount(PERSON_FILE) - 1;//7053334
+int TOUR_FILE_SIZE = lineCount(TOUR_FILE) - 1;//8914778
+int TRIP_FILE_SIZE = lineCount(TRIP_FILE) - 1;//22811684
+/*
+int PERSON_FILE_SIZE = 7053334;
+int TOUR_FILE_SIZE = 8914778;
+int TRIP_FILE_SIZE = 22811684;
+*/
 
 struct Tour; struct Trip; struct Person;
 
@@ -86,8 +91,8 @@ Person* all_people;
 Tour* all_tours;
 Trip* all_trips;
 vector<short>* closePoints;
-bool close[1][1455];// [1455][1455];
-vector<Trip*>* organized[1][1455];// [24][1455];
+bool close[1455][1455];
+vector<Trip*>* organized[24][1455];
 float* dist;
 
 //Outdated

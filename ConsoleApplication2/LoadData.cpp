@@ -5,14 +5,11 @@
 #include "QuickParser_inline.cpp"
 #include "Globals.h"
 #include "DataClasses.h"
+#include "MiscFunctions.h"
 
 using namespace std;
 
-
-double distanceBetween2(int origin, int destination)
-{
-	return dist[((origin - 1) * NUM_LOCATIONS) + (destination - 1)];
-}
+double distanceBetween(int origin, int destination);
 
 void parseClosePoints()
 {
@@ -36,7 +33,7 @@ void parseClosePoints()
 		for (int k = i + 1; k <= NUM_LOCATIONS; k++)
 		{
 
-			if (distanceBetween2(i, k) < CLOSE_DISTANCE)
+			if (distanceBetween(i, k) < CLOSE_DISTANCE)
 			{
 				closePoints[i].push_back(k);
 				closePoints[k].push_back(i);
@@ -145,6 +142,9 @@ void parseTrips()
 		trip.hour = q.parseInt();
 		trip.mode = q.parseInt();
 		all_trips[i].id = i;
+
+		if (DoableTripModes[trip.mode])
+			trip.doable = true;
 
 		if (trip.isShareable())
 		{

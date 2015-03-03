@@ -10,6 +10,19 @@
 
 using namespace std;
 
+
+double distanceBetween(int origin, int destination)
+{
+	return dist[((origin - 1) * NUM_LOCATIONS) + (destination - 1)];
+}
+
+bool strictCompare(Trip& t1, Trip& t2)
+{
+	return (distanceBetween(t1.origin, t2.origin) < CLOSE_DISTANCE &&
+		distanceBetween(t1.destination, t2.destination) < CLOSE_DISTANCE &&
+		t1.perid != t2.perid);
+}
+
 void OMPInfo()
 {
 	cout << "Max threads: " << omp_get_max_threads() << endl;

@@ -3,7 +3,6 @@
 
 #include "stdafx.h"
 
-double distanceBetween2(int origin, int destination);
 void parseClosePoints();
 void parsePeople();
 void parseTours();

@@ -24,9 +24,8 @@ Max or Min
 */
 
 extern string DATA_FILE;
+extern string NEW_TRIP_FILE;
 extern string TRIP_SHARING_FILE;
-extern string SHARED_TRIPS_FILE;
-extern string UNSHARED_TRIPS_FILE;
 
 extern int shareable;	//Trips that passed the initial checks
 extern int potentialSharing;//Trips with at least one trip it could potentially share with	
@@ -34,6 +33,7 @@ extern int sharingBeforeTourLevel;//Trips that actually shared before tour-level
 extern int sharingBeforeReshare ;//Trips that actually shared before re=sharing
 extern int actualSharing;//Trips that actually shared with at least one other trip
 extern int unshared;//Trips unshared because of tour-level requirements
+extern int groups;//Numer of sharing-groups
 extern int solo;//Trips that could not be actually shared (but weren't unshared)
 extern int orphaned;//Trips that were sharing with a trip that was unshared, and now are not sharing
 extern double VMTReduction; //Vehicle miles saved

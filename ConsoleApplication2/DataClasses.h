@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include "Globals.h"
+#include "VGroup.h"
 
 #include <map>
 #include <vector>
@@ -10,6 +11,8 @@
 #include <iostream>
 using namespace std;
 
+
+class VGroup;
 struct Trip
 {
 	int id;
@@ -24,16 +27,17 @@ struct Trip
 	string purpose;
 
 	vector<int> potentialSharing;
-	//vector<int>* actualSharing;
-	list<int>* actualSharing;
+	VGroup* group;
 
-	int shareable; //1 = yes, 0 = no, -1 = unknown. potential shareability
-	bool shared; //set to 0 if unshared by tour-level decisions
-	Trip* leader;
+	bool doable;
+	bool shared; //set to 0 if unshared by tour-level decisionss
 
 	Trip();
 
 	bool isShareable();
+	void setDoable(bool set, bool recheckTour = true);
+private:
+	int shareable; //1 = yes, 0 = no, -1 = unknown. potential shareability
 };
 
 
