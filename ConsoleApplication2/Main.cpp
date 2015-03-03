@@ -44,15 +44,16 @@ inline bool compareTrips(Trip& trip1, Trip& trip2)
 
 //Parses the sorted trips, builds potential sharing lists
 void analyzeTrips()
-	{
+{
+	//For each hour
 	Timer ct("Analyzing trips");
 
 	long long int sharedtrips = 0;
 	for (int hour = 5; hour < 24; hour++)
 	{
-		for (int origin = 1; origin <= 12; origin++)
+		for (int origin = 1; origin <= NUM_LOCATIONS; origin++)
 		{
-			for (int destination = 1; destination <= 12; destination++)
+			for (int destination = 1; destination <= NUM_LOCATIONS; destination++)
 			{
 				for (Trip* trip1 : organized[hour][origin][destination])
 				{
@@ -84,13 +85,15 @@ void addToSharing(Trip& t1);
 void reCheckTour(Tour& to)
 {
 	int doableTripCount = 0;
-	for (Trip* t : to.trips)
+	for (Trip* t : to.trips) //Count number of doable trips
 		if (t->doable)
 			doableTripCount++;
 
+	//If tour is not shared, has trips, and has enough doable trips
 	if (!to.shared && to.trips.size() > 0 && (((double)doableTripCount / to.trips.size()) >= TourDoableRequirement))
 	{
 		to.shared = 1;
+		//For each trip in the tour, if it's not shared  and is shareable, share it
 		for (Trip*& t : to.trips)
 		{
 			if (!t->shared && t->isShareable())
@@ -105,23 +108,23 @@ void reCheckTour(Tour& to)
 //Tries to add a trip back to the sharing groups
 void addToSharing(Trip& t1)
 {
-
-	//if (t1.shared && (!t1.group || (t1.group && t1.group->trips.size() == 1)))
-	if (t1.group == NULL)
+	if (t1.group == NULL) //if trip doesn't have a group yet
 	{
-		for (int t2id : t1.potentialSharing)
+		for (int t2id : t1.potentialSharing) //for each potentially shared trip
 		{
 			Trip& t2 = all_trips[t2id];
-			if (t2.group && t2.group->canAddTrip(t1))
+			if (t2.group && t2.group->canAddTrip(t1)) //if trip can share with t2's group, add it
 			{
 				t2.group->addTrip(t1, false);
 				return;
 			}
 		}
 
+		//If group is still null, give it a solo group
 		if (t1.group == NULL)
 			t1.group = new VGroup(t1);
 
+		//if trip is driving, try to add each potentialsharing group to it, if possible
 		if (DrivingModes[t1.mode])
 		{
 			for (int t2id : t1.potentialSharing)
@@ -139,16 +142,15 @@ void addToSharing(Trip& t1)
 //Tries to form a new group around a trip
 void formGroup(Trip& t1)	//Returns true if at least one other trip is added. Will always create t1.actualSharing of some size >= 1
 {
+	//If tour doesn't have a group yet and is a driver
 	if (DrivingModes[t1.mode] && t1.group == NULL)
 	{
-		t1.group = new VGroup(t1);
+		t1.group = new VGroup(t1); //Give it a group, and add any potentially shared trips that can share with its group
 		for (int t2id : t1.potentialSharing)
 		{
 			Trip& t2 = all_trips[t2id];
-			if (t1.group->canAddTrip(t2))
-			{
+			if (t1.group->canAddTrip(t2)) 
 				t1.group->addTrip(t2, false);
-			}
 		}
 	}
 }
@@ -157,23 +159,25 @@ void formGroup(Trip& t1)	//Returns true if at least one other trip is added. Wil
 void checkTour(Tour& to)
 {
 	int doableTripCount = 0;
-	for (Trip* t : to.trips)
+	for (Trip* t : to.trips) //Count how many trips are doable
 		if (t->doable)
 			doableTripCount++;
 
+	//If the tour is shareable, has trips, and not enough trips are shared
 	if (to.shared && to.trips.size() > 0 && (((double)doableTripCount / to.trips.size()) < TourDoableRequirement))
 	{
 		to.shared = 0;
 		vector<Trip*>::iterator it = to.trips.begin();
-		while (it != to.trips.end())
+		while (it != to.trips.end()) //While we haven't gone through the whole list
 		{
-			VGroup* group = (*it)->group;
+			VGroup* group = (*it)->group; //Group is set to the trip's group
 
-			if (group != NULL)
+			if (group != NULL) //if group exists
 			{
 				int size = group->trips.size();
 				group->removeTrip(**it);
-				if (size != (*it)->group->trips.size())
+				//if removing the trip affected the group's size, restart to make sure nothing is missed
+				if (size != (*it)->group->trips.size()) 
 					it = to.trips.begin();
 				else
 					it++;
@@ -181,12 +185,6 @@ void checkTour(Tour& to)
 			else
 				it++;
 		}
-		/*
-		for (Trip*& t : to.trips)
-		{
-			if (t->group != NULL)
-				t->group->removeTrip(*t);
-		}*/
 	}
 }
 
@@ -194,22 +192,17 @@ void checkTour(Tour& to)
 void shareTrips()
 {
 	Timer ti("Sharing trips");
+	//Try to form a group for all trips
 	for (int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
-	{
 		formGroup(all_trips[t1id]);
-	}
-
+	
 	for (int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
 	{
 		Trip& t1 = all_trips[t1id];
-		if (t1.group == NULL)
-		{
+		if (t1.group == NULL) //If group could not be formed, give it a solo group
 			t1.group = new VGroup(t1);
-		}
-		else if (t1.group->trips.size() > 1)
-		{
+		else if (t1.group->trips.size() > 1) //if group was formed and is shring with others
 			sharingBeforeTourLevel++;
-		}
 	}
 }
 
@@ -218,163 +211,113 @@ void checkTours()
 {
 	Timer* ti = new Timer("Checking Tours");
 
+	//Check the tour, ensuring it has enough doable trips. Remove all trips from sharing if not
 	int prevUnshared = unshared;
 	for (int i = 0; i < TOUR_FILE_SIZE; i++)
-	{
 		checkTour(all_tours[i]);
-	}
 
+	//If we have unshared items
 	if (prevUnshared != unshared)
 	{
 		delete ti;
 		cout << unshared - prevUnshared << " unshared. Going again: " << endl;
 		checkTours();
 	}
-	else
+	else //No new items were deleted
 	{
-		cout << unshared - prevUnshared << " unshared." << endl;
-		for (int i = 0; i < TRIP_FILE_SIZE; i++)
+		cout << unshared - prevUnshared << " unshared." << endl; 
+		for (int i = 0; i < TRIP_FILE_SIZE; i++) //if t1 has a group and is sharing with others
 			if (all_trips[i].group && all_trips[i].group->trips.size() > 1) sharingBeforeReshare++;
-	}
-}
-	
-bool pointee_is_equal(Trip& t1, Trip* t2)
-{
-	return &t1 == t2;
-}
-
-void generateLeaders(bool clearAfter = false)
-{
-	int actualSharing2 = 0;
-	for (int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
-	{
-		Trip& t1 = all_trips[t1id];
-		if (t1.group != NULL)
-		{
-			if (t1.group->trips.size() > 1)
-			{
-				actualSharing++;//maybe try deleting the group after adding trips.size to ensure we've added exactly all the groups once
-				if (t1.group->leader == &t1)
-				{
-					actualSharing2 += t1.group->trips.size();
-					groups++;
-				}
-			}
-			//if (find(t1.group->trips.begin(), t1.group->trips.end(), &t1) == t1.group->trips.end())
-			//list<Trip*>::iterator matching_iter = find_if(t1.group->trips.begin(), t1.group->trips.end(), bind1st(pointee_is_equal, &t1))
-				//cout << t1id << " was not in its actualsharing set." << endl;
-		}
-	}
-	/*
-	for (int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
-	{
-		Trip& t1 = all_trips[t1id];
-		remove(*t1.actualSharing, t1.id);
-	}
-	for (int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
-	{
-		Trip& t1 = all_trips[t1id];
-		if (t1.actualSharing->size() > 0)
-			cout << t1id << " had extra elements in its sharing list" << endl;
-	}*/
-	cout << "1: " << actualSharing << "   2: " << actualSharing2 << endl;
-
-	if (clearAfter)
-	{
-		actualSharing = 0;
-		groups = 0;
 	}
 }
 
 //Attempts to re-share trips after tour-level removals
-int reshared = 0;
 void shareTrips2()
 {
 
-	int lastReshared = -1;
-	while (reshared != lastReshared)
+	int reshared = 0; //Total reshared trip count
+	int lastReshared = -1; //Reshared trip count before each iteration
+
+	while (reshared != lastReshared) //While we have added new trips
 	{
 		if (lastReshared >= 0)
 			cout << reshared - lastReshared << " added" << endl;
 		lastReshared = reshared;
+
 		Timer ti("Resharing trips");
+		//Try to add the trip to an existing group
 		for (int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
 		{
 			Trip& t1 = all_trips[t1id];
-			if (t1.group == NULL)
+			if (t1.group == NULL) //if t1 has a group
 			{
-				for (int t2id : t1.potentialSharing)
+				for (int t2id : t1.potentialSharing) //for each trip t1 might share with
 				{
 					Trip& t2 = all_trips[t2id];
-					if (t2.group && t2.group->canAddTrip(t1))
+					if (t2.group && t2.group->canAddTrip(t1)) //if t2 has a group and can accept t1
 					{
-						t2.group->addTrip(t1, false);
+						t2.group->addTrip(t1, false); //add t1 to t2's group
 						reshared++;
 						break;
 					}
 				}
 			}
 		}
+		
+		//Form groups for the remaining trips
 		for (int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
 		{
 			Trip& t1 = all_trips[t1id];
-			if (t1.group == NULL)
+			if (t1.group == NULL) //if t1 doesn't have a group
 			{
 				formGroup(t1);
-				if (t1.group && t1.group->trips.size() > 1)
-				{
+				if (t1.group && t1.group->trips.size() > 1) //if we gave it a group and it's sharing
 					reshared++;
-				}
 			}
 		}
 	}
 
+	//Fill in any remaining groups with soo trips
 	for (int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
 	{
 		Trip& t1 = all_trips[t1id];
 		if (t1.group == NULL)
-		{
 			t1.group = new VGroup(t1);
-		}
 	}
 }
 
-//Gathers data after algorithms are finished
+//Gathers data points after algorithms are finished
 void postStatistics()
 {
 	Timer ti("Writing output.txt");
 	for (int i = 0; i < TRIP_FILE_SIZE; i++)
 	{
 		Trip& t = all_trips[i];
-		if (t.potentialSharing.size() > 0)
-		{
+		if (t.potentialSharing.size() > 0)	
 			potentialSharing++;
-		}
 
-		if (t.group)
+		if (t.group) //if t has a group
 		{
-			if (t.group->trips.size() > 1)
+			if (t.group->trips.size() > 1) //if t is sharing with others
 			{
-				//actualSharing++;
-				for (Trip* t2 : t.group->trips)
+				for (Trip* t2 : t.group->trips) //for each shared trip
 				{
-					if (DrivingModes[t2->mode] && t2->group->leader != t2)
+					if (DrivingModes[t2->mode] && t2->group->leader != t2) //If t2 is a driver and not a leader
 					{
-						VMTReduction += distanceBetween(t2->origin, t2->destination);
+						VMTReduction += distanceBetween(t2->origin, t2->destination); //Add its distance to saved VMT count
 					}
 				}
 			}
-			else
+			else //if t is not sharing with others
 			{
 				solo++;
 			}
 
 
 		}
-		else
+		else if (t.isShareable())	//if t does not have a group, but is shareable
 		{
-			if (t.isShareable())
-				orphaned++;
+			orphaned++;
 		}
 	}
 
@@ -407,45 +350,13 @@ void tripSharingOutput()
 	{
 		outf << t1id;
 		if (all_trips[t1id].group)
-		{
 			for (Trip* t2 : all_trips[t1id].group->trips)
 				outf << ',' << t2->id;
-		}
 	}
 	outf << '\n';
 }
 
-string lineModify(string input, string numPassengers, string mode)
-{
-	int commas = 0;
-	int loc = -1;
-	int start, end;
-
-	while (commas != 2)
-		if (input[++loc] == ',')
-			commas++;
-	start = loc;
-	while (commas != 3)
-		if (input[++loc] == ',')
-			commas++;
-	end = loc;
-
-	input = input.substr(0, start + 1) + numPassengers + input.substr(end, input.size() - end);
-
-	commas = 0;
-	loc = -1;
-	while (commas != 15)
-		if (input[++loc] == ',') 
-			commas++;
-	start = loc;
-	while (commas != 16)
-		if (input[++loc] == ',') 
-			commas++;
-	end = loc;
-
-	return input.substr(0, start + 1) + mode + input.substr(end, input.size() - end);
-}
-
+//Writes trip details out to files
 void tripDetailsOutput()
 {
 	Timer ti("Writing trip details");
@@ -454,47 +365,40 @@ void tripDetailsOutput()
 	string* lines;
 	lines = new string[TRIP_FILE_SIZE];
 	string line;
-	getline(inf, line);
+	getline(inf, line);	//Skip header
 	int count = 0;
 	for (int i = 0; i < TRIP_FILE_SIZE; i++)
 	{
-		getline(inf, line);
+		getline(inf, line);	//Read all lines of the file into memory
 		lines[count] = line;
 		++count;
 	}
 
 	ofstream outf(NEW_TRIP_FILE);
-	
-	int sharedCount = 0;
-	int unsharedCount = 0;
+
 	for (int i = 0; i < TRIP_FILE_SIZE; i++)
 	{
 		Trip& t = all_trips[i];
-		if (t.group)
+		if (t.group)	//If t has a group (all should)
 		{
-			if (t.group->trips.size() > 1)
+			if (t.group->trips.size() > 1)	//If t is sharing with others
 			{
-				//sharedCount++;
-				if (t.group->leader == &t)
+				if (t.group->leader == &t)	//If t is a leader
 				{
-					sharedCount += t.group->trips.size();// += t.actualSharing->size();
 					int numPassengers = 0;
-					for (Trip* t2 : t.group->trips)
-					{
+					for (Trip* t2 : t.group->trips)	//Count its number of passengers
 						numPassengers += t2->numPassengers;
-					}
-					outf << lineModify(lines[i], to_string(numPassengers), "5") << endl;
+					
+					//Write line to file, changing trip size and mode to numPassengers and 5
+					outf << lineModify(lines[i], to_string(numPassengers), "5") << endl;	
 				}
 			}
-			else
+			else //if trip is not sharing with others
 			{
-				unsharedCount++;
-				outf << lines[i] << endl;
+				outf << lines[i] << endl;	//Write line to file normally
 			}
-		}
-	}
-
-	cout << "shared: " << sharedCount << endl << "unshared: " << unsharedCount << endl;
+		} //if t.group
+	} //for each trip
 }
 
 //Records total execution time
@@ -513,7 +417,6 @@ void timerWrapper()
 
 
 	shareTrips();
-	//generateLeaders();
 	checkTours();	
 	shareTrips2();
 	generateLeaders();
@@ -532,8 +435,6 @@ void timerWrapper()
 
 }
 
-//output: trip (split by sharing and not sharing)
-
 //Main
 int _tmain(int argc, _TCHAR* argv[])
 {
@@ -547,10 +448,6 @@ int _tmain(int argc, _TCHAR* argv[])
 
 
 /*
-fix VMT miles
-fix shared trip output
-unify shared & unshared trip otuput
-generate trips + actual sharing sets file
 print each person and their probability data
 
 */

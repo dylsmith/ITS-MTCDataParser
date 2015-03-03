@@ -10,6 +10,8 @@
 
 using namespace std;
 
+string lineModify(string input, string numPassengers, string mode);
+
 double distanceBetween(int origin, int destination);
 
 //Compares two trips, checking every requirement
