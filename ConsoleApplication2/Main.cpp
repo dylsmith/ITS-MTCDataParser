@@ -291,33 +291,32 @@ void countMiles()
 	double miles = 0;
 	double miles2 = 0;
 	double totalMiles = 0;
+	double totalDrivenMiles = 0;
 	for (int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
 	{
 		Trip& t = all_trips[t1id];
+		if (DrivingModes[t.mode])
+			totalDrivenMiles += distanceBetween(t.origin, t.destination);
 
 		totalMiles += distanceBetween(t.origin, t.destination);
-		miles += distanceBetween(t.origin, t.destination);
-		if (t.group)
+		if (t.group && t.group->leader == &t && t.group->trips.size() > 1) //if t is a leader and sharing with others
 		{
-
-			if (t.group->leader == &t)
+			int driving = 0;
+			for (Trip* t2 : t.group->trips)
 			{
-				int driving = 0;
-				for (Trip* t2 : t.group->trips)
+				if (t2->group->leader != t2 && DrivingModes[t2->mode])
 				{
-					if (t2->group->leader != t2 && DrivingModes[t2->mode])
-					{
-						driving++;
-					}
+					driving++;
+					miles += distanceBetween(t2->origin, t2->destination);
 				}
-				miles2 += driving * distanceBetween(t.origin, t.destination);
 			}
+			miles2 += driving * distanceBetween(t.origin, t.destination);
 		}
 	}
-	miles /= TRIP_FILE_SIZE;
-	cout << "Total vehicle miles traveled (by all trips): " << totalMiles << endl;
-	cout << "Average trip length: " << miles << endl;
-	cout << "VMT, if all non-leaders would have driven the same length as the leader: " << miles2 << endl;
+	cout << "Total miles traveled by all trips: " << totalMiles << endl;
+	cout << "Total miles traveled by all drivers: " << totalDrivenMiles << endl;
+	cout << "VMT, by driving passenger's distance saved: " << miles << endl;
+	cout << "VMT, by leader's distance * number of driving passengers: " << miles2 << endl;
 }
 
 //Gathers data points after algorithms are finished
@@ -339,18 +338,19 @@ void postStatistics()
 				actualSharing++;
 				if (t.group->leader == &t)
 				{
+					for (Trip* t2 : t.group->trips) //for each shared trip
+					{
+						if (DrivingModes[t2->mode] && t2->group->leader != t2) //If t2 is a driver and not a leader
+						{
+							//TODO: include leader's driving distance to pick up everyone
+							VMTReduction += distanceBetween(t2->origin, t2->destination); //Add its distance to saved VMT count
+						}
+					}
 					actualSharing2 += t.group->trips.size();
 					groups++;
 				}
 
-				for (Trip* t2 : t.group->trips) //for each shared trip
-				{
-					if (DrivingModes[t2->mode] && t2->group->leader != t2) //If t2 is a driver and not a leader
-					{
-						//TODO: include leader's driving distance to pick up everyone
-						VMTReduction += distanceBetween(t2->origin, t2->destination); //Add its distance to saved VMT count
-					}
-				}
+
 			}
 			else //if t is not sharing with others
 			{
