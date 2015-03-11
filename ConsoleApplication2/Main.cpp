@@ -119,6 +119,17 @@ void EVCheck()
 			hh.viable = false;
 	}
 
+	int count = 0;
+	int total = 0;
+	for (int i = 0; i < HOUSEHOLD_FILE_SIZE; i++)
+	{
+		Household& hh = all_households[i];
+		if (hh.viable)
+			++count;
+		++total;
+	}
+	cout << count << "/" << total << " households were viable, or " << (double)count / total * 100 << "%." << endl;
+
 	//Unshare trips whole household is not shareable
 	/*
 	for (int i = 0; i < HOUSEHOLD_FILE_SIZE; i++)

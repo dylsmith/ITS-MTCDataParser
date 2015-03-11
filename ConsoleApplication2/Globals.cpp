@@ -83,6 +83,8 @@ Household* all_households;
 Person* all_people;
 Tour* all_tours;
 Trip* all_trips;
+Tour* all_joint_tours;
+Trip* all_joint_trips;
 vector<short>* closePoints;
 bool close[1455][1455];
 d3* organized;
