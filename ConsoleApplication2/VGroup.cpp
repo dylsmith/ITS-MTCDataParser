@@ -14,6 +14,22 @@ bool VGroup::canAddTrip(Trip& t2)
 {
 	if ((t2.group && t2.group->trips.size() > 1) || !t2.shared)	//If trip is already sharing with others
 		return false;
+
+	if (Maximize)
+	{
+		if (trips.size() >= MaxPeople)
+		{
+			return false;
+		}
+	}
+	else
+	{
+		if (trips.size() >= MinPeople)
+		{
+			return false;
+		}
+	}
+
 	
 	int numPassengers = 0;
 	for (Trip* t1 : trips)	//Sum numPassengers, or return false if the t2 cannot share with a trip in the group
@@ -22,14 +38,15 @@ bool VGroup::canAddTrip(Trip& t2)
 		{
 			return false;
 		}
-		numPassengers += t1->numPassengers;
 	}
-	numPassengers += t2.numPassengers;
 
+	return true;
+	/*
 	if (Maximize) //Keep returning true until the car is full
 		return(numPassengers <= MaxPeople);
 	else //Keep returning true until the car has a certain number of people
 		return(numPassengers >= MinPeople && numPassengers <= MaxPeople);
+		*/
 
 }
 //Try to avoid sharing drivers initially

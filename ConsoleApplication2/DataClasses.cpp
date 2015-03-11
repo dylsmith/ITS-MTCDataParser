@@ -77,4 +77,13 @@ Tour::Tour()
 
 Person::Person()
 {
+	milesDriven = 0;
+}
+
+Household::Household()
+{
+	people.reserve(5);
+	shareable = true;
+	jointMilesDriven = 0;
+	indivMilesDriven = 0;
 }

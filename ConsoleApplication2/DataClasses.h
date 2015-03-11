@@ -21,8 +21,7 @@ struct Trip
 	int tourid;
 	int origin;
 	int destination;
-	int hour;
-	int numPassengers;
+	int minute;
 	int mode;
 	string purpose;
 
@@ -36,7 +35,6 @@ struct Trip
 	bool isShareable();
 	void setDoable(bool set, bool recheckTour = true);
 
-private:
 	int shareable; //1 = yes, 0 = no, -1 = unknown. potential shareability
 };
 
@@ -59,11 +57,28 @@ struct Person
 	//vars from file:
 	int id;
 	int income;
+	int hhid;
+
+	double milesDriven;
 
 	//generated vars:
 	map<int, Tour*> tours;
 
 	Person();
+};
+
+struct Household
+{
+	int hhid;
+	int autos;
+	double jointMilesDriven;
+	double indivMilesDriven;
+	vector<Person*> people;
+	map<int, Tour*> tours;
+
+	bool viable;
+
+	Household();
 };
 
 #endif

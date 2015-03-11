@@ -10,6 +10,14 @@
 
 using namespace std;
 
+extern int ExecutionMode; //0 = ridesharing, 1 = EV
+
+struct Trip;
+typedef vector<Trip*> d0;
+typedef vector<d0> d1;
+typedef vector<d1> d2;
+typedef vector<d2> d3;
+
 extern string DATA_FILE;
 extern string TRIP_DETAILS_FILE;
 extern bool WriteTripDetails;
@@ -18,11 +26,19 @@ extern bool WriteTripSharing;
 extern string SHARED_DETAILS_FILE;
 extern string UNSHARED_DETAILS_FILE;
 
+//EV algorithm variables:
+extern double EVAverageRange;
+extern int EVTripModes[];
+extern string JOINT_TOURS_FILE;
+extern int JOINT_TOURS_FILE_SIZE;
+extern string JOINT_TRIPS_FILE;
+extern int JOINT_TRIPS_FILE_SIZE;
 
 //Sharing algorithm variables:
 extern bool Maximize;
 extern int MinPeople;	//If minizing, all groups must be at least this big
 extern int MaxPeople;	//If maximizing, all groups cannot be larger than that
+extern int MaxSharingTimeDifference; //How many minutes apart two shared trips can be
 
 //Tour requirements
 extern float TourDoableRequirement;	//For some legs of a tour to be shared, at least this percent must be doable 
@@ -45,6 +61,9 @@ extern int NUM_LOCATIONS;		//Number of locations in the simulation
 extern string DISTANCE_FILE;
 extern int DISTANCE_FILE_SIZE;
 
+extern string HOUSEHOLD_FILE;
+extern int HOUSEHOLD_FILE_SIZE;
+
 extern string PERSON_FILE;
 extern int PERSON_FILE_SIZE;
 
@@ -55,15 +74,18 @@ extern string TRIP_FILE;
 extern int TRIP_FILE_SIZE;
 
 
-struct Tour; struct Trip; struct Person;
+struct Tour; struct Trip; struct Person; struct Household;
 
 //Data allocation:
+extern Household* all_households;
 extern Person* all_people;
 extern Tour* all_tours;
 extern Trip* all_trips;
+extern Tour* all_joint_tours;
+extern Trip* all_joint_trips;
 extern vector<short>* closePoints;
 extern bool close[1455][1455];
-extern vector<Trip*>* organized[24][1455];
+extern d3* organized;
 extern float* dist;
 extern int shareable;	//Trips that passed the initial checks
 extern int potentialSharing;//Trips with at least one trip it could potentially share with	

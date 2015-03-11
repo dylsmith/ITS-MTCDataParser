@@ -13,32 +13,133 @@
 #include "omp.h"
 using namespace std;
 
+typedef vector<Trip*> d0;
+typedef vector<d0> d1;
+typedef vector<d1> d2;
+typedef vector<d2> d3;
+
 //Reserves space for all data
 void reserveSpace()
 {
 	Timer t("Reserving space for all objects");
 
-	memset(close, 0, DISTANCE_FILE_SIZE);
-	dist = new float[DISTANCE_FILE_SIZE];
-	all_people = new Person[PERSON_FILE_SIZE + 1];
-	all_tours = new Tour[TOUR_FILE_SIZE];
-	all_trips = new Trip[TRIP_FILE_SIZE];
-	closePoints = new vector<short>[NUM_LOCATIONS + 1];
+	if (ExecutionMode == 0) //if ridesharing
+	{
+		memset(close, 0, DISTANCE_FILE_SIZE);
+		dist = new float[DISTANCE_FILE_SIZE];
+		all_households = new Household[HOUSEHOLD_FILE_SIZE];
+		all_people = new Person[PERSON_FILE_SIZE + 1];
+		all_tours = new Tour[TOUR_FILE_SIZE];
+		all_trips = new Trip[TRIP_FILE_SIZE];
+		closePoints = new vector<short>[NUM_LOCATIONS + 1];
+
+		organized = new d3(1440, d2(1455, d1(1455, d0())));
+	}
+	else if (ExecutionMode == 1) //if EV
+	{
+		dist = new float[DISTANCE_FILE_SIZE];
+		all_households = new Household[HOUSEHOLD_FILE_SIZE];
+		all_people = new Person[PERSON_FILE_SIZE + 1];
+		all_tours = new Tour[TOUR_FILE_SIZE];
+		all_trips = new Trip[TRIP_FILE_SIZE];
+		all_joint_tours = new Tour[JOINT_TOURS_FILE_SIZE];
+		all_joint_trips = new Trip[JOINT_TRIPS_FILE_SIZE];
+	}
+	/*
+	organized.reserve(1440);
+	for (int i = 0; i < 1440; i++)
+	{
+		organized[i]
+		for (int j = 0; j < 1455; j++)
+		{
+			organized[i][j] = new int[1454];
+		}
+	}*/
 }
 
 //Frees space
 void cleanUp()
 {
 	free((void*)close);
-	for (int i = 0; i < 24; i++)
-		for (int k = 1; k <= NUM_LOCATIONS; k++)
-			delete organized[i][k];
+	delete organized;
 }
 
 //Compares trips, assuming they're potentially shareable already
 inline bool compareTrips(Trip& trip1, Trip& trip2)
 {
 	return (trip1.perid != trip2.perid);
+}
+
+void EVCheck()
+{
+	//Check each person's conditions in each household
+	for (int i = 0; i < HOUSEHOLD_FILE_SIZE; i++)
+	{
+		Household& hh = all_households[i];
+		for (auto& topair : hh.tours)
+		{
+			Tour& to = *topair.second;
+			for (Trip* t : to.trips)
+			{
+				if (DrivingModes[t->mode])
+				{
+					hh.jointMilesDriven += distanceBetween(t->origin, t->destination);
+				}
+			}
+		}
+		
+		if (hh.jointMilesDriven > EVAverageRange)
+			hh.viable = false;
+
+		for (Person* p : hh.people)
+		{
+			//Sum up person-miles
+			for (auto& topair : p->tours)
+			{
+				Tour& to = *topair.second;
+				//Tour level checks go here
+				
+				for (Trip*& t1 : to.trips)	//Trip-level checks TODO ensure there's a driver
+				{
+					if (DrivingModes[t1->mode])
+					{
+						double dist = distanceBetween(t1->origin, t1->destination);
+						p->milesDriven += dist; //Sum up how far the person travels
+					}
+				}
+			}
+
+			hh.indivMilesDriven += p->milesDriven;
+
+			if (p->milesDriven > EVAverageRange)	//If the person travels too far, household is not shared
+				hh.viable = false;
+		}
+
+		if (hh.indivMilesDriven + hh.jointMilesDriven > hh.autos * EVAverageRange)
+			hh.viable = false;
+	}
+
+	//Unshare trips whole household is not shareable
+	/*
+	for (int i = 0; i < HOUSEHOLD_FILE_SIZE; i++)
+	{
+		Household& hh = all_households[i];
+
+		if (!hh.shareable)
+		{
+			for (Person* p : hh.people)
+			{
+				for (auto& topair : p->tours)
+				{
+					Tour& to = *topair.second;
+					for (Trip*& t1 : to.trips)
+					{
+						t1->shareable = 0;
+					}
+				}
+			}
+		}
+	}*/
 }
 
 //Parses the sorted trips, builds potential sharing lists
@@ -48,25 +149,33 @@ void analyzeTrips()
 	Timer ct("Analyzing trips");
 
 	long long int sharedtrips = 0;
-	for (int hour = 5; hour < 24; hour++)
+
+	for (int minute = 300; minute < 1440; minute++)
 	{
-		cout << (double)(hour - 5) / 19 << "% done" << endl;
-		for (int origin = 1; origin <= NUM_LOCATIONS; origin++)
+		if(minute % 100 == 0) cout << (double)(minute - 300)/(1140) << "% done" << endl;
+
+		for (int otherMinute = minute - MaxSharingTimeDifference; otherMinute < minute + MaxSharingTimeDifference; otherMinute++)
 		{
-			for (int destination = 1; destination <= NUM_LOCATIONS; destination++)
+			if (otherMinute < 1440 && otherMinute >= 300)
 			{
-				for (Trip* trip1 : organized[hour][origin][destination])
+				for (int origin = 1; origin <= NUM_LOCATIONS; origin++)
 				{
-					for (int closeOrigin : closePoints[origin])
+					for (int destination = 1; destination <= NUM_LOCATIONS; destination++)
 					{
-						for (int closeDestination : closePoints[destination])
+						for (Trip* trip1 : (*organized)[minute][origin][destination])
 						{
-							for (Trip* trip2 : organized[hour][closeOrigin][closeDestination])
+							for (int closeOrigin : closePoints[origin])
 							{
-								if (compareTrips(*trip1, *trip2))
+								for (int closeDestination : closePoints[destination])
 								{
-									trip1->potentialSharing.push_back(trip2->id);
-									sharedtrips++;
+									for (Trip* trip2 : (*organized)[otherMinute][closeOrigin][closeDestination])
+									{
+										if (compareTrips(*trip1, *trip2))
+										{
+											trip1->potentialSharing.push_back(trip2->id);
+											sharedtrips++;
+										}
+									}
 								}
 							}
 						}
@@ -392,16 +501,24 @@ void tripSharingOutput()
 {
 	Timer ti("Writing trip sharing to file");
 	ofstream outf(TRIP_SHARING_FILE);
+	outf << "perid, tourid, tripid, numpassengers, sharing set" << endl;
 	for(int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
 	{
-		outf << t1id;
+		//Write perid, tourid, tripid, numPassengers, actual sharing set (separated by spaces)
+		Trip& t1 = all_trips[t1id];
+		outf << t1.perid << ", " << t1.tourid << ", " << t1.id << ", ";
 		if (all_trips[t1id].group)
+		{
+			outf << t1.group->trips.size() << ",";
 			for (Trip* t2 : all_trips[t1id].group->trips)
-				outf << ',' << t2->id;
-		//TODO: add number of passengers here, second column
-		//TODO: write perid, tourid, tripid, numpassengers, (actualy sharing set, separated by spaces)
+				outf << ' ' << t2->id;
+		}
+		else
+		{
+			outf << "1, " << t1id << endl;
+		}
+		outf << endl;
 	}
-	outf << '\n';
 }
 
 //Writes trip details out to files
@@ -438,13 +555,9 @@ void tripDetailsOutput()
 			if (t.group->trips.size() > 1)	//If t is sharing with others
 			{
 				if (t.group->leader == &t)	//If t is a leader
-				{
-					int numPassengers = 0;
-					for (Trip* t2 : t.group->trips)	//Count its number of passengers
-						numPassengers += t2->numPassengers;
-					
-					//Write line to file, changing trip size and mode to numPassengers and 5
-					string line = lineModify(lines[i], to_string(numPassengers), "5");
+				{					
+					//Write line to file, changing trip mode to 5
+					string line = lineModify(lines[i], "5");
 					outf << line << endl;
 					shared << line << endl;
 				}
@@ -463,28 +576,42 @@ void timerWrapper()
 {
 	Timer total("Total");
 
-	reserveSpace();
+	if (ExecutionMode == 0) //if ridesharing
+	{
+		reserveSpace();
 
-	parseClosePoints();
-
-	parsePeople();
-	parseTours();
-	parseTrips();
-	analyzeTrips();
-
+		parseClosePoints();
+		parsePeople();
+		parseTours();
+		parseTrips();
+		analyzeTrips();
 
 
-	shareTrips();
-	checkTours();	
-	shareTrips2();
 
-	countMiles();
-	postStatistics();	//DataPoints.txt - shared trip counts, etc.
-	if (WriteTripDetails)
-		tripDetailsOutput(); //TripsOutput.txt - each trip's full details, after sharing
+		shareTrips();
+		checkTours();
+		shareTrips2();
 
-	if (WriteTripSharing)
-		tripSharingOutput(); //TripSharing.txt - each trip's actual sharing list
+		countMiles();
+		postStatistics();	//DataPoints.txt - shared trip counts, etc.
+		if (WriteTripDetails)
+			tripDetailsOutput(); //TripsOutput.txt - each trip's full details, after sharing
+
+		if (WriteTripSharing)
+			tripSharingOutput(); //TripSharing.txt - each trip's actual sharing list
+	}
+	else if (ExecutionMode == 1) //if EV
+	{
+		reserveSpace();
+		parseDistances();
+		parseHouseholds();
+		parsePeople();
+		parseTours();
+		parseTrips();
+		parseJointTours();
+		parseJointTrips();
+		EVCheck();
+	}
 }
 
 //Main

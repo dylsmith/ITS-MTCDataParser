@@ -6,6 +6,9 @@
 
 using namespace std;
 
+int ExecutionMode = 1; // 0 = ridesharing, 1 = EV
+
+
 string DATA_FILE = "C:\\ITS\\DataPoints.txt";//Important data points written here
 string TRIP_SHARING_FILE = "C:\\ITS\\TripSharing.txt";//Each tripid and its actual sharing list will be written to this file
 bool WriteTripSharing = true;
@@ -14,11 +17,19 @@ bool WriteTripDetails = true;
 string SHARED_DETAILS_FILE = "C:\\ITS\\SharedTripDetails.csv";
 string UNSHARED_DETAILS_FILE = "C:\\ITS\\UnsharedTripDetails.csv";;
 
+//EV algorithm variables:
+double EVAverageRange = 40;
+int EVTripModes[] = { 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+string JOINT_TOURS_FILE = "";
+int JOINT_TOURS_FILE_SIZE = lineCount(JOINT_TOURS_FILE) - 1;
+string JOINT_TRIPS_FILE = "";
+int JOINT_TRIPS_FILE_SIZE = lineCount(JOINT_TRIPS_FILE) - 1;
 
 //Sharing algorithm variables:
-bool Maximize = true; //TODO: False not yet implemented
-int MinPeople = 2;	//If minizing, all groups must be at least this big
-int MaxPeople = 5;	//If maximizing, all groups cannot be larger than that
+bool Maximize = true; //Switches which of the following two values is used
+int MinPeople = 2;	//If minimizing, all groups will grow to this size and stop
+int MaxPeople = 5;	//If maximizing, all groups will grow to this size and stop
+int MaxSharingTimeDifference = 15; //How many minutes apart two shared trips can be
 
 //Tour requirements
 float TourDoableRequirement = 0.5;	//For some legs of a tour to be shared, at least this percent must be doable 
@@ -45,14 +56,17 @@ string TRIP_FILE = "C:\\ITS\\indivTripData_3.csv";*/
 
 //Server settings
 string DISTANCE_FILE = "D:\\Farzad\\ridesharing\\sample data\\DistanceSkimsDatabaseAM.csv";
+string HOUSEHOLD_FILE = ""; //TODO: Fill this in
 string PERSON_FILE = "D:\\Farzad\\ridesharing\\sample data\\personFile.p2011s3a.2010.csv";
 string TOUR_FILE = "D:\\Farzad\\ridesharing\\sample data\\indivTourData_3.csv";
 string TRIP_FILE = "D:\\Farzad\\ridesharing\\sample data\\indivTripData_32.csv";
 
 
+
 int NUM_LOCATIONS = 1454;		//Number of locations in the simulation
 int DISTANCE_FILE_SIZE = NUM_LOCATIONS * NUM_LOCATIONS;
 
+int HOUSEHOLD_FILE_SIZE = lineCount(HOUSEHOLD_FILE) - 1; //TODO: record this number
 int PERSON_FILE_SIZE = lineCount(PERSON_FILE) - 1;//7053334
 int TOUR_FILE_SIZE = lineCount(TOUR_FILE) - 1;//8914778
 int TRIP_FILE_SIZE = lineCount(TRIP_FILE) - 1;//22811684
@@ -65,12 +79,13 @@ int TRIP_FILE_SIZE = 22811684;
 struct Tour; struct Trip; struct Person;
 
 //Data allocation:
+Household* all_households;
 Person* all_people;
 Tour* all_tours;
 Trip* all_trips;
 vector<short>* closePoints;
 bool close[1455][1455];
-vector<Trip*>* organized[24][1455];
+d3* organized;
 float* dist;
 
 int shareable = 0;	//Trips that passed the initial checks

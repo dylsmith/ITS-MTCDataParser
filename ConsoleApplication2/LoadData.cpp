@@ -6,16 +6,14 @@
 #include "Globals.h"
 #include "DataClasses.h"
 #include "MiscFunctions.h"
+#include "FastRand.h"
 
 using namespace std;
 
 double distanceBetween(int origin, int destination);
 
-void parseClosePoints()
+void parseDistances()
 {
-
-	Timer timeit("Parsing ClosePoints");
-
 	QuickParser q(DISTANCE_FILE);
 	int j = 0;
 	while (j < DISTANCE_FILE_SIZE)
@@ -25,6 +23,14 @@ void parseClosePoints()
 		q.parseComma();
 		dist[j++] = q.parseFloat();
 	}
+}
+
+void parseClosePoints()
+{
+
+	Timer timeit("Parsing ClosePoints");
+
+	parseDistances();
 
 	//Check non-diagonal points where k > i. Graph is symmetric, so we don't need to check k < i
 	for (int i = 1; i <= NUM_LOCATIONS; i++)
@@ -43,6 +49,27 @@ void parseClosePoints()
 		}
 	}
 }
+
+void parseHouseholds()
+{
+	QuickParser q(HOUSEHOLD_FILE);
+
+	Timer timeit("Parsing households");
+
+	for (int i = 0; i < HOUSEHOLD_FILE_SIZE; i++)
+	{
+		q.parseNewLine();
+
+		int hhid = q.parseInt();
+		q.parseComma();
+		q.parseComma();
+		q.parseComma();
+		all_households[hhid].autos = q.parseInt();
+
+		all_households[hhid].hhid = hhid;
+	}
+}
+
 void parsePeople()
 {
 	QuickParser q(PERSON_FILE);
@@ -53,7 +80,7 @@ void parsePeople()
 	{
 		q.parseNewLine();
 
-		q.parseComma();
+		int hhid  = q.parseInt();
 		int perid = q.parseInt();
 		q.parseComma();
 		q.parseComma();
@@ -70,6 +97,27 @@ void parsePeople()
 		all_people[perid].income = q.parseInt();
 
 		all_people[perid].id = perid;
+		all_people[perid].hhid = hhid;
+
+		all_households[hhid].people.push_back(&all_people[perid]);
+	}
+}
+
+void parseJointTours()
+{
+	QuickParser q(JOINT_TOURS_FILE);
+
+	Timer timeit("Parsing joint tours");
+
+	for (int i = 0; i < JOINT_TOURS_FILE_SIZE; i++)
+	{
+		Tour& to = all_joint_tours[i];
+		q.parseNewLine();
+		to.hhid = q.parseInt();
+		to.id = q.parseInt();
+
+		all_households[to.hhid].tours[to.id] = &to;
+
 	}
 }
 
@@ -107,12 +155,43 @@ void parseTours()
 	}
 }
 
+void parseJointTrips()
+{
+	QuickParser q(JOINT_TRIPS_FILE);
+	Timer timeit("Paring joint trips");
+
+	for (int i = 0; i < JOINT_TRIPS_FILE_SIZE; i++)
+	{
+		Trip& t = all_joint_trips[i];
+		q.parseNewLine();
+
+		t.id = i;
+		int hhid = q.parseInt();
+		t.tourid = q.parseInt();
+		q.parseComma();
+		q.parseComma();
+		q.parseComma();
+		q.parseComma();
+		t.purpose = q.parseString();
+		t.origin = q.parseInt();
+		q.parseComma();
+		t.destination = q.parseInt();
+		q.parseComma();
+		q.parseComma();
+		q.parseComma();
+		t.mode = q.parseInt();
+
+		all_households[hhid].tours[t.tourid]->trips.push_back(&t);
+
+	}
+}
 
 void parseTrips()
 {
 	QuickParser q(TRIP_FILE);
 	Timer timeit("Parsing trips");
 
+	/*
 	for (int i = 5; i < 24; i++)
 	{
 		for (int k = 1; k <= NUM_LOCATIONS; k++)
@@ -120,7 +199,7 @@ void parseTrips()
 			organized[i][k] = new vector<Trip*>[NUM_LOCATIONS + 1];
 			organized[i][k]->reserve(120);
 		}
-	}
+	}*/
 
 	for (int i = 0; i < TRIP_FILE_SIZE; i++)
 	{
@@ -130,7 +209,6 @@ void parseTrips()
 
 		q.parseComma();
 		trip.perid = q.parseInt();
-		trip.numPassengers = 1;
 		q.parseComma();
 		trip.tourid = q.parseInt();
 		q.parseComma();
@@ -143,19 +221,23 @@ void parseTrips()
 		trip.destination = q.parseInt();
 		q.parseComma();
 		q.parseComma();
-		trip.hour = q.parseInt();
+		trip.minute = q.parseInt();
 		trip.mode = q.parseInt();
 		all_trips[i].id = i;
+
+		trip.minute *= 60;
+		trip.minute += fastrand() % 60;
 
 		if (DoableTripModes[trip.mode])
 			trip.doable = true;
 
 		if (trip.isShareable())
 		{
-			organized[trip.hour][trip.origin][trip.destination].push_back(&all_trips[i]);
+			(*organized)[trip.minute][trip.origin][trip.destination].push_back(&all_trips[i]);
 			shareable++;
 		}
 
 		all_people[trip.perid].tours[trip.tourid]->trips.push_back(&all_trips[i]);
 	}
 }
+

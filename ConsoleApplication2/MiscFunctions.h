@@ -10,7 +10,7 @@
 
 using namespace std;
 
-string lineModify(string input, string numPassengers, string mode);
+string lineModify(string input, string mode);
 
 double distanceBetween(int origin, int destination);
 
