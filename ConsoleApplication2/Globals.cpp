@@ -6,7 +6,7 @@
 
 using namespace std;
 
-int ExecutionMode = 1; // 0 = ridesharing, 1 = EV
+int ExecutionMode = 0; // 0 = ridesharing, 1 = EV
 
 
 string DATA_FILE = "C:\\ITS\\DataPoints.txt";//Important data points written here
@@ -17,19 +17,23 @@ bool WriteTripDetails = true;
 string SHARED_DETAILS_FILE = "C:\\ITS\\SharedTripDetails.csv";
 string UNSHARED_DETAILS_FILE = "C:\\ITS\\UnsharedTripDetails.csv";;
 
+struct DepartProbability;
+
 //EV algorithm variables:
-double EVAverageRange = 40;
-int EVTripModes[] = { 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-string JOINT_TOURS_FILE = "";
+double EVAverageRange = 100;
+int EVTripModes[] = { 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; //Identical to drivingmodes right now
+string JOINT_TOURS_FILE = "D:\\MTC_ABM\\main\\jointTourData_3.csv";
 int JOINT_TOURS_FILE_SIZE = lineCount(JOINT_TOURS_FILE) - 1;
-string JOINT_TRIPS_FILE = "";
+string JOINT_TRIPS_FILE = "D:\\MTC_ABM\\main\\jointTripData_3.csv";
 int JOINT_TRIPS_FILE_SIZE = lineCount(JOINT_TRIPS_FILE) - 1;
+string DEPART_PROBABILITY_FILE = "C:\\ITS\\ProbabilityLookup.txt";
+DepartProbability* departprobs;
 
 //Sharing algorithm variables:
 bool Maximize = true; //Switches which of the following two values is used
 int MinPeople = 2;	//If minimizing, all groups will grow to this size and stop
 int MaxPeople = 5;	//If maximizing, all groups will grow to this size and stop
-int MaxSharingTimeDifference = 15; //How many minutes apart two shared trips can be
+int MaxSharingTimeDifference = 10; //How many minutes apart two shared trips can be
 
 //Tour requirements
 float TourDoableRequirement = 0.5;	//For some legs of a tour to be shared, at least this percent must be doable 
@@ -56,7 +60,7 @@ string TRIP_FILE = "C:\\ITS\\indivTripData_3.csv";*/
 
 //Server settings
 string DISTANCE_FILE = "D:\\Farzad\\ridesharing\\sample data\\DistanceSkimsDatabaseAM.csv";
-string HOUSEHOLD_FILE = ""; //TODO: Fill this in
+string HOUSEHOLD_FILE = "D:\\MTC_ABM\\main\\householdData_3.csv"; //TODO: Fill this in
 string PERSON_FILE = "D:\\Farzad\\ridesharing\\sample data\\personFile.p2011s3a.2010.csv";
 string TOUR_FILE = "D:\\Farzad\\ridesharing\\sample data\\indivTourData_3.csv";
 string TRIP_FILE = "D:\\Farzad\\ridesharing\\sample data\\indivTripData_32.csv";

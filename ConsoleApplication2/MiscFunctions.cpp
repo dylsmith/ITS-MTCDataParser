@@ -35,12 +35,40 @@ double distanceBetween(int origin, int destination)
 	return dist[((origin - 1) * NUM_LOCATIONS) + (destination - 1)];
 }
 
+bool closeMinutes(Trip& t1, Trip& t2)
+{
+	if (t1.hour == t2.hour) //if hours are the same, compare minute difference
+	{
+		return abs(t1.minute - t2.minute) <= MaxSharingTimeDifference;
+	}
+	else
+	{
+		int earlyMinute, lateMinute;
+		if (t1.hour + 1 == t2.hour) //t1 hour is earlier
+		{
+			earlyMinute = t1.minute; //record early 
+			lateMinute = t2.minute;
+		}
+		else if (t2.hour + 1 == t1.hour) //t2 hour is earlier
+		{
+			earlyMinute = t2.minute;
+			lateMinute = t1.minute;
+		}
+		else
+		{
+			return false;
+		}
+		int diff = lateMinute + (60 - earlyMinute);
+		return diff <= MaxSharingTimeDifference;
+	}
+}
+
 bool strictCompare(Trip& t1, Trip& t2)
 {
 	return (distanceBetween(t1.origin, t2.origin) < CLOSE_DISTANCE &&
 		distanceBetween(t1.destination, t2.destination) < CLOSE_DISTANCE &&
 		t1.perid != t2.perid &&
-		abs(t1.minute - t2.minute) <= MaxSharingTimeDifference);
+		closeMinutes(t1, t2));
 }
 
 void OMPInfo()

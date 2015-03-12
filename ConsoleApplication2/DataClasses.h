@@ -4,6 +4,8 @@
 #include "stdafx.h"
 #include "Globals.h"
 #include "VGroup.h"
+#include "QuickParser.h"
+#include "FastRand.h"
 
 #include <map>
 #include <vector>
@@ -11,6 +13,21 @@
 #include <iostream>
 using namespace std;
 
+struct DepartProbability
+{
+	map<int, vector<int> > probs; 
+
+	//Generate a random minute offset, based on observed departure quartiles
+	int generate(int zone, int hour);
+
+	//Convert an hour to a probability block (chunks of hours)
+	int hourToBlock(int hour);
+
+	//Convert a zone (1-1454) to a county
+	int zoneToCounty(int zone);
+	
+	DepartProbability();
+};
 
 class VGroup;
 struct Trip
@@ -21,6 +38,7 @@ struct Trip
 	int tourid;
 	int origin;
 	int destination;
+	int hour;
 	int minute;
 	int mode;
 	string purpose;

@@ -12,7 +12,7 @@ using namespace std;
 
 extern int ExecutionMode; //0 = ridesharing, 1 = EV
 
-struct Trip;
+struct Trip; struct DepartProbability;
 typedef vector<Trip*> d0;
 typedef vector<d0> d1;
 typedef vector<d1> d2;
@@ -33,6 +33,8 @@ extern string JOINT_TOURS_FILE;
 extern int JOINT_TOURS_FILE_SIZE;
 extern string JOINT_TRIPS_FILE;
 extern int JOINT_TRIPS_FILE_SIZE;
+extern string DEPART_PROBABILITY_FILE;
+extern DepartProbability* departprobs;
 
 //Sharing algorithm variables:
 extern bool Maximize;

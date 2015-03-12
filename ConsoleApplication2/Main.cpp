@@ -10,6 +10,7 @@
 #include "LoadData.h"
 
 #include <iostream>
+#include <iomanip>
 #include "omp.h"
 using namespace std;
 
@@ -23,38 +24,23 @@ void reserveSpace()
 {
 	Timer t("Reserving space for all objects");
 
-	if (ExecutionMode == 0) //if ridesharing
-	{
-		memset(close, 0, DISTANCE_FILE_SIZE);
-		dist = new float[DISTANCE_FILE_SIZE];
-		all_households = new Household[HOUSEHOLD_FILE_SIZE];
-		all_people = new Person[PERSON_FILE_SIZE + 1];
-		all_tours = new Tour[TOUR_FILE_SIZE];
-		all_trips = new Trip[TRIP_FILE_SIZE];
-		closePoints = new vector<short>[NUM_LOCATIONS + 1];
+	memset(close, 0, DISTANCE_FILE_SIZE);
+	dist = new float[DISTANCE_FILE_SIZE];
+	all_households = new Household[HOUSEHOLD_FILE_SIZE];
+	all_people = new Person[PERSON_FILE_SIZE + 1];
+	all_tours = new Tour[TOUR_FILE_SIZE];
+	all_trips = new Trip[TRIP_FILE_SIZE];
+	closePoints = new vector<short>[NUM_LOCATIONS + 1];
 
-		organized = new d3(1440, d2(1455, d1(1455, d0())));
-	}
-	else if (ExecutionMode == 1) //if EV
+	organized = new d3(24, d2(1455, d1(1455, d0())));
+
+
+	if (ExecutionMode == 1) //if EV
 	{
-		dist = new float[DISTANCE_FILE_SIZE];
-		all_households = new Household[HOUSEHOLD_FILE_SIZE];
-		all_people = new Person[PERSON_FILE_SIZE + 1];
-		all_tours = new Tour[TOUR_FILE_SIZE];
-		all_trips = new Trip[TRIP_FILE_SIZE];
+
 		all_joint_tours = new Tour[JOINT_TOURS_FILE_SIZE];
 		all_joint_trips = new Trip[JOINT_TRIPS_FILE_SIZE];
 	}
-	/*
-	organized.reserve(1440);
-	for (int i = 0; i < 1440; i++)
-	{
-		organized[i]
-		for (int j = 0; j < 1455; j++)
-		{
-			organized[i][j] = new int[1454];
-		}
-	}*/
 }
 
 //Frees space
@@ -76,81 +62,62 @@ void EVCheck()
 	for (int i = 0; i < HOUSEHOLD_FILE_SIZE; i++)
 	{
 		Household& hh = all_households[i];
-		for (auto& topair : hh.tours)
+		for (auto& topair : hh.tours) //For each joint tour
 		{
 			Tour& to = *topair.second;
-			for (Trip* t : to.trips)
+			for (Trip* t : to.trips) //For each joint trip
 			{
-				if (DrivingModes[t->mode])
+				if (DrivingModes[t->mode]) //If trip is driving, add its distance to joint miles
 				{
 					hh.jointMilesDriven += distanceBetween(t->origin, t->destination);
 				}
 			}
 		}
 		
-		if (hh.jointMilesDriven > EVAverageRange)
-			hh.viable = false;
-
-		for (Person* p : hh.people)
+		if (hh.jointMilesDriven > EVAverageRange) //if joint miles driven is too far, house is not viable
 		{
-			//Sum up person-miles
-			for (auto& topair : p->tours)
+			hh.viable = false;
+		}
+
+		for (Person* p : hh.people) //For each person in household
+		{
+			for (auto& topair : p->tours) //For each tour
 			{
-				Tour& to = *topair.second;
-				//Tour level checks go here
-				
-				for (Trip*& t1 : to.trips)	//Trip-level checks TODO ensure there's a driver
+				Tour& to = *topair.second;				
+				for (Trip*& t1 : to.trips)	//For each trip
 				{
-					if (DrivingModes[t1->mode])
+					if (DrivingModes[t1->mode]) //If trip is driving, add distance driven to person's miles
 					{
-						double dist = distanceBetween(t1->origin, t1->destination);
-						p->milesDriven += dist; //Sum up how far the person travels
+						p->milesDriven += distanceBetween(t1->origin, t1->destination);; //Sum up how far the person travels
 					}
 				}
 			}
 
-			hh.indivMilesDriven += p->milesDriven;
+			hh.indivMilesDriven += p->milesDriven; //Add person's miles driven to total household miles driven
 
 			if (p->milesDriven > EVAverageRange)	//If the person travels too far, household is not shared
+			{
 				hh.viable = false;
+			}
 		}
 
-		if (hh.indivMilesDriven + hh.jointMilesDriven > hh.autos * EVAverageRange)
+		if (hh.indivMilesDriven + hh.jointMilesDriven > hh.autos * EVAverageRange) //check if entire household drives too far
+		{
 			hh.viable = false;
-	}
+		}
+	} //for each household
+
 
 	int count = 0;
 	int total = 0;
-	for (int i = 0; i < HOUSEHOLD_FILE_SIZE; i++)
+	for (int i = 0; i < HOUSEHOLD_FILE_SIZE; i++) //Sum up total households vs viable households
 	{
 		Household& hh = all_households[i];
 		if (hh.viable)
 			++count;
-		++total;
 	}
-	cout << count << "/" << total << " households were viable, or " << (double)count / total * 100 << "%." << endl;
+	cout << count << "/" << HOUSEHOLD_FILE << " households were viable, or " << setprecision(3) << (double)count / HOUSEHOLD_FILE_SIZE * 100 << "%." << endl;
 
-	//Unshare trips whole household is not shareable
-	/*
-	for (int i = 0; i < HOUSEHOLD_FILE_SIZE; i++)
-	{
-		Household& hh = all_households[i];
-
-		if (!hh.shareable)
-		{
-			for (Person* p : hh.people)
-			{
-				for (auto& topair : p->tours)
-				{
-					Tour& to = *topair.second;
-					for (Trip*& t1 : to.trips)
-					{
-						t1->shareable = 0;
-					}
-				}
-			}
-		}
-	}*/
 }
 
 //Parses the sorted trips, builds potential sharing lists
@@ -161,25 +128,25 @@ void analyzeTrips()
 
 	long long int sharedtrips = 0;
 
-	for (int minute = 300; minute < 1440; minute++)
+	for (int hour = 5; hour < 24; hour++)
 	{
-		if(minute % 100 == 0) cout << (double)(minute - 300)/(1140) << "% done" << endl;
+		//if(minute % 100 == 0) cout << (double)(minute - 300)/(1140) << "% done" << endl;
 
-		for (int otherMinute = minute - MaxSharingTimeDifference; otherMinute < minute + MaxSharingTimeDifference; otherMinute++)
+		for (int otherHour = hour - 1; otherHour <= hour + 1; otherHour++)
 		{
-			if (otherMinute < 1440 && otherMinute >= 300)
+			if (otherHour < 24)
 			{
 				for (int origin = 1; origin <= NUM_LOCATIONS; origin++)
 				{
 					for (int destination = 1; destination <= NUM_LOCATIONS; destination++)
 					{
-						for (Trip* trip1 : (*organized)[minute][origin][destination])
+						for (Trip* trip1 : (*organized)[hour][origin][destination])
 						{
 							for (int closeOrigin : closePoints[origin])
 							{
 								for (int closeDestination : closePoints[destination])
 								{
-									for (Trip* trip2 : (*organized)[otherMinute][closeOrigin][closeDestination])
+									for (Trip* trip2 : (*organized)[hour][closeOrigin][closeDestination])
 									{
 										if (compareTrips(*trip1, *trip2))
 										{
@@ -591,6 +558,8 @@ void timerWrapper()
 	{
 		reserveSpace();
 
+
+		departprobs = new DepartProbability();
 		parseClosePoints();
 		parsePeople();
 		parseTours();
@@ -613,6 +582,7 @@ void timerWrapper()
 	}
 	else if (ExecutionMode == 1) //if EV
 	{
+		departprobs = new DepartProbability();
 		reserveSpace();
 		parseDistances();
 		parseHouseholds();
