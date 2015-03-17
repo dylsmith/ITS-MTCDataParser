@@ -68,7 +68,8 @@ bool strictCompare(Trip& t1, Trip& t2)
 	return (distanceBetween(t1.origin, t2.origin) < CLOSE_DISTANCE &&
 		distanceBetween(t1.destination, t2.destination) < CLOSE_DISTANCE &&
 		t1.perid != t2.perid &&
-		closeMinutes(t1, t2));
+		//closeMinutes(t1, t2));
+		abs(t1.minute - t2.minute) <= MaxSharingTimeDifference);
 }
 
 void OMPInfo()

@@ -7,37 +7,39 @@
 using namespace std;
 
 int ExecutionMode = 0; // 0 = ridesharing, 1 = EV
+int g_seed = 1; //Random seed. This determines the set of random numbers generated.
 
-
-string DATA_FILE = "C:\\ITS\\DataPoints.txt";//Important data points written here
-string TRIP_SHARING_FILE = "C:\\ITS\\TripSharing.txt";//Each tripid and its actual sharing list will be written to this file
-bool WriteTripSharing = true;
-string TRIP_DETAILS_FILE = "C:\\ITS\\TripDetails.csv";	//Shared trips will be merged, unshared trips left intact, and written to this
-bool WriteTripDetails = true;
-string SHARED_DETAILS_FILE = "C:\\ITS\\SharedTripDetails.csv";
-string UNSHARED_DETAILS_FILE = "C:\\ITS\\UnsharedTripDetails.csv";;
+string ALL_TRIP_DETAILS_FILE = "D:\\MTC_BASE\\PostProcess\\AllTripDetails.csv"; //All trips printed out here, with modes changed to '5' if in a group
+string DATA_FILE = "D:\\MTC_BASE\\PostProcess\\DataPoints.txt";//Important data points written here
+string TRIP_SHARING_FILE = "D:\\MTC_BASE\\PostProcess\\TripSharing.txt";//Each tripid and its actual sharing list will be written to this file
+bool WriteTripSharing = false;
+string TRIP_DETAILS_FILE = "D:\\MTC_BASE\\PostProcess\\TripDetails.csv";	//Shared trips will be merged (and mode changed to 5), unshared trips left intact, and written to this
+string SHARED_DETAILS_FILE = "D:\\MTC_BASE\\PostProcess\\SharedTripDetails.csv"; //Split versions of above
+string UNSHARED_DETAILS_FILE = "D:\\MTC_BASE\\PostProcess\\UnsharedTripDetails.csv";
+bool WriteTripDetails = false;
 
 struct DepartProbability;
 
 //EV algorithm variables:
-double EVAverageRange = 100;
+int viableHouseholds = 0;
+double EVAverageRange = 50; //100 -> 92.9% //EV range
 int EVTripModes[] = { 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; //Identical to drivingmodes right now
-string JOINT_TOURS_FILE = "D:\\MTC_ABM\\main\\jointTourData_3.csv";
+string JOINT_TOURS_FILE = "D:\\MTC_BASE\\main\\jointTourData_4.csv";
 int JOINT_TOURS_FILE_SIZE = lineCount(JOINT_TOURS_FILE) - 1;
-string JOINT_TRIPS_FILE = "D:\\MTC_ABM\\main\\jointTripData_3.csv";
+string JOINT_TRIPS_FILE = "D:\\MTC_BASE\\main\\jointTripData_4.csv";
 int JOINT_TRIPS_FILE_SIZE = lineCount(JOINT_TRIPS_FILE) - 1;
-string DEPART_PROBABILITY_FILE = "C:\\ITS\\ProbabilityLookup.txt";
+string DEPART_PROBABILITY_FILE = "C:\\ITS\\ProbabilityLookup.txt"; // Shuld be the same for entire scenario run (calibrating based on the spatial-temporal distribution of the survey data)
 DepartProbability* departprobs;
 
 //Sharing algorithm variables:
 bool Maximize = true; //Switches which of the following two values is used
 int MinPeople = 2;	//If minimizing, all groups will grow to this size and stop
 int MaxPeople = 5;	//If maximizing, all groups will grow to this size and stop
-int MaxSharingTimeDifference = 10; //How many minutes apart two shared trips can be
+int MaxSharingTimeDifference = 60; //How many minutes apart two shared trips can be
 
 //Tour requirements
 float TourDoableRequirement = 0.5;	//For some legs of a tour to be shared, at least this percent must be doable 
-int DrivingModes[] = { 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; //Each ridesharing group must have one person whose mode is one of these
+int DrivingModes[] = { 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; //Each ridesharing group must have one person whose mode is one of these
 int DoableTripModes[] = { 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0 };  //These modes do not require the trip to be shared for it to be doable
 
 //Trip sharing requirements:  (ordered by computational complexity)
@@ -59,11 +61,11 @@ string TOUR_FILE = "C:\\ITS\\indivTourData_3.csv";
 string TRIP_FILE = "C:\\ITS\\indivTripData_3.csv";*/
 
 //Server settings
-string DISTANCE_FILE = "D:\\Farzad\\ridesharing\\sample data\\DistanceSkimsDatabaseAM.csv";
-string HOUSEHOLD_FILE = "D:\\MTC_ABM\\main\\householdData_3.csv"; //TODO: Fill this in
-string PERSON_FILE = "D:\\Farzad\\ridesharing\\sample data\\personFile.p2011s3a.2010.csv";
-string TOUR_FILE = "D:\\Farzad\\ridesharing\\sample data\\indivTourData_3.csv";
-string TRIP_FILE = "D:\\Farzad\\ridesharing\\sample data\\indivTripData_32.csv";
+string DISTANCE_FILE = "D:\\MTC_BASE\\database\\DistanceSkimsDatabaseAM.csv";
+string HOUSEHOLD_FILE = "D:\\MTC_BASE\\main\\householdData_4.csv"; //TODO: Fill this in (Simulated or Synthesized)
+string PERSON_FILE = "D:\\MTC_BASE\\popsyn\\personFile.p2011s3a.2010.csv";// Synthesized works in this context
+string TOUR_FILE = "D:\\MTC_BASE\\main\\indivTourData_4.csv";
+string TRIP_FILE = "D:\\MTC_BASE\\main\\indivTripData_4.csv";
 
 
 

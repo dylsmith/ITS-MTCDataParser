@@ -11,6 +11,7 @@
 using namespace std;
 
 extern int ExecutionMode; //0 = ridesharing, 1 = EV
+extern int g_seed;
 
 struct Trip; struct DepartProbability;
 typedef vector<Trip*> d0;
@@ -18,6 +19,7 @@ typedef vector<d0> d1;
 typedef vector<d1> d2;
 typedef vector<d2> d3;
 
+extern string ALL_TRIP_DETAILS_FILE;
 extern string DATA_FILE;
 extern string TRIP_DETAILS_FILE;
 extern bool WriteTripDetails;
@@ -27,6 +29,7 @@ extern string SHARED_DETAILS_FILE;
 extern string UNSHARED_DETAILS_FILE;
 
 //EV algorithm variables:
+extern int viableHouseholds;
 extern double EVAverageRange;
 extern int EVTripModes[];
 extern string JOINT_TOURS_FILE;

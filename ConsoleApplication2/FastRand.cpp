@@ -14,9 +14,4 @@ unsigned long fastrand(void)
 	z = t ^ x ^ y;
 	return z;
 }*/
-int g_seed;
 
-inline int fastrand() {
-	g_seed = (214013 * g_seed + 2531011);
-	return (g_seed >> 16) & 0x7FFF;
-}

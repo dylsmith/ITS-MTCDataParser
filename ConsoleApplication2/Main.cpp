@@ -11,6 +11,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <sstream>
 #include "omp.h"
 using namespace std;
 
@@ -53,7 +54,8 @@ void cleanUp()
 //Compares trips, assuming they're potentially shareable already
 inline bool compareTrips(Trip& trip1, Trip& trip2)
 {
-	return (trip1.perid != trip2.perid);
+	return (trip1.perid != trip2.perid &&
+		trip1.minute - trip2.minute <= MaxSharingTimeDifference);
 }
 
 void EVCheck()
@@ -107,16 +109,14 @@ void EVCheck()
 		}
 	} //for each household
 
-
-	int count = 0;
 	int total = 0;
 	for (int i = 0; i < HOUSEHOLD_FILE_SIZE; i++) //Sum up total households vs viable households
-	{
+	{											//TODO: Add a new column to household file: viable
 		Household& hh = all_households[i];
 		if (hh.viable)
-			++count;
+			++viableHouseholds;
 	}
-	cout << count << "/" << HOUSEHOLD_FILE << " households were viable, or " << setprecision(3) << (double)count / HOUSEHOLD_FILE_SIZE * 100 << "%." << endl;
+	cout << viableHouseholds << "/" << HOUSEHOLD_FILE_SIZE << " households were viable, or " << setprecision(5) << (double)viableHouseholds / HOUSEHOLD_FILE_SIZE * 100 << "%." << endl;
 
 }
 
@@ -132,7 +132,8 @@ void analyzeTrips()
 	{
 		//if(minute % 100 == 0) cout << (double)(minute - 300)/(1140) << "% done" << endl;
 
-		for (int otherHour = hour - 1; otherHour <= hour + 1; otherHour++)
+		//for (int otherHour = hour - 1; otherHour <= hour + 1; otherHour++)
+		for (int otherHour = hour; otherHour <= hour; otherHour++) //TODO: revert this
 		{
 			if (otherHour < 24)
 			{
@@ -146,7 +147,7 @@ void analyzeTrips()
 							{
 								for (int closeDestination : closePoints[destination])
 								{
-									for (Trip* trip2 : (*organized)[hour][closeOrigin][closeDestination])
+									for (Trip* trip2 : (*organized)[otherHour][closeOrigin][closeDestination])
 									{
 										if (compareTrips(*trip1, *trip2))
 										{
@@ -459,6 +460,7 @@ void postStatistics()
 		outf << "Minimizing group size" << endl;
 
 	outf << "Total trips: " << TRIP_FILE_SIZE << endl;
+	
 	outf << "Shareable trips (precondition): " << shareable << endl;
 	outf << "Trips with at least one potentially shared trip: " << potentialSharing << endl;
 	outf << "Trips with at least one actually shared trip (before tour-level checks): " << sharingBeforeTourLevel << endl;
@@ -499,54 +501,125 @@ void tripSharingOutput()
 	}
 }
 
+void writeTripLine(string& line, ofstream& outf, Trip& t)
+{
+	if (t.group)
+	{
+		if (t.group->trips.size() > 1)
+		{
+			outf << lineModify(line, "5") << endl;
+		}
+		else
+		{
+			outf << line << endl;
+		}
+	}
+	else
+	{
+		cout << "Orphaned trip!" << endl;
+	}
+	/*
+	stringstream output;
+	if (t.group)
+	{
+		if (t.group->trips.size() > 1)
+		{
+			if (t.group->leader == &t)
+				output << lineModify(line, "5");
+			else
+				output << line;
+
+			output << ", " << t.group->trips.size() << ",";
+			for (Trip* t2 : t.group->trips)
+			{
+				output << " " << t2->id;
+			}
+			output << endl;
+		}
+		else
+		{
+			output << line << ", 1, " << t.id << endl;
+		}
+	}
+	if (abs(TRIP_FILE_SIZE - t.id) < 20) cout << output.str();
+	outf << output.str();*/
+}
+
 //Writes trip details out to files
 void tripDetailsOutput()
 {
 	Timer ti("Writing trip details");
 
-	ifstream inf(TRIP_FILE);
 	string* lines;
 	lines = new string[TRIP_FILE_SIZE];
+
 	string line;
-	getline(inf, line);	///Read Header
+	string header;
 
-	ofstream outf(TRIP_DETAILS_FILE);
-	ofstream shared(SHARED_DETAILS_FILE);
-	ofstream unshared(UNSHARED_DETAILS_FILE);
-	outf << line << endl;
-	shared << line << endl;
-	unshared << line << endl;
+	ifstream inf(TRIP_FILE);
+	getline(inf, header);	///Read Header
 
-	int count = 0;
 	for (int i = 0; i < TRIP_FILE_SIZE; i++)
 	{
 		getline(inf, line);	//Read all lines of the file into memory
-		lines[count] = line;
-		++count;
+		lines[i] = line;
 	}
 
+	if (WriteTripDetails)
+	{
+		ofstream both(TRIP_DETAILS_FILE);
+		ofstream shared(SHARED_DETAILS_FILE);
+		ofstream unshared(UNSHARED_DETAILS_FILE);
+		both << header << endl;
+		shared << header << endl;
+		unshared << header << endl;
+
+		for (int i = 0; i < TRIP_FILE_SIZE; i++)
+		{
+			Trip& t = all_trips[i];
+			if (t.group)	//If t has a group (all should)
+			{
+				if (t.group->trips.size() > 1)	//If t is sharing with others
+				{
+					if (t.group->leader == &t)	//If t is a leader
+					{
+						string line = lineModify(lines[i], "5");//Write line to file, changing trip mode to 5
+						both << line << endl;
+						shared << line << endl;
+					}
+				}
+				else //if trip is not sharing with others
+				{
+					both << lines[i] << endl;	//Write line to file normally
+					unshared << lines[i] << endl;
+				}
+			} //if t.group
+		} //for each trip
+	}
+
+	cout << "Opening " << ALL_TRIP_DETAILS_FILE << endl;
+	ofstream all(ALL_TRIP_DETAILS_FILE);
+	all << header << endl;
+	int noGroup = 0;
 	for (int i = 0; i < TRIP_FILE_SIZE; i++)
 	{
 		Trip& t = all_trips[i];
-		if (t.group)	//If t has a group (all should)
+		if (t.group)
 		{
-			if (t.group->trips.size() > 1)	//If t is sharing with others
+			if (t.group->trips.size() > 1) //If trip is in a sharing group, change its mode and output its details
 			{
-				if (t.group->leader == &t)	//If t is a leader
-				{					
-					//Write line to file, changing trip mode to 5
-					string line = lineModify(lines[i], "5");
-					outf << line << endl;
-					shared << line << endl;
-				}
+				all << lineModify(lines[i], "5") << endl;
 			}
-			else //if trip is not sharing with others
+			else //Otherwise just output its details
 			{
-				outf << lines[i] << endl;	//Write line to file normally
-				unshared << lines[i] << endl;
+				all << lines[i] << endl;
 			}
-		} //if t.group
-	} //for each trip
+		}
+		else
+		{
+			++noGroup;
+		}
+	}
 }
 
 //Records total execution time
@@ -574,8 +647,7 @@ void timerWrapper()
 
 		countMiles();
 		postStatistics();	//DataPoints.txt - shared trip counts, etc.
-		if (WriteTripDetails)
-			tripDetailsOutput(); //TripsOutput.txt - each trip's full details, after sharing
+		tripDetailsOutput(); //TripsOutput.txt - each trip's full details, after sharing
 
 		if (WriteTripSharing)
 			tripSharingOutput(); //TripSharing.txt - each trip's actual sharing list
@@ -592,6 +664,9 @@ void timerWrapper()
 		parseJointTours();
 		parseJointTrips();
 		EVCheck();
+		ofstream outf(DATA_FILE);
+		outf << "EV Algorithm viable households: " << viableHouseholds << "/" << HOUSEHOLD_FILE_SIZE 
+			 << " households were viable, or " << setprecision(5) << (double)viableHouseholds / HOUSEHOLD_FILE_SIZE * 100 << "%." << endl;
 	}
 }
 

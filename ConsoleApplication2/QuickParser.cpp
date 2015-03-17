@@ -9,13 +9,14 @@ using namespace std;
 //Sets up a file for parsing
 QuickParser::QuickParser(string filename)
 {
+	cout << "Loading " << filename << endl;
 	//Timer timeit("Loading " + filename);
 	//Open file
 	FILE* fp = new FILE();
 	int err = fopen_s(&fp, filename.c_str(), "rb");
 	if (fp == NULL)
 	{
-		cout << "Error " << err << " when opening file!";
+		cout << "Error " << err << " when opening " << filename << endl;
 		pause();
 		exit(0);
 	}
