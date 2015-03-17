@@ -132,8 +132,7 @@ void analyzeTrips()
 	{
 		//if(minute % 100 == 0) cout << (double)(minute - 300)/(1140) << "% done" << endl;
 
-		//for (int otherHour = hour - 1; otherHour <= hour + 1; otherHour++)
-		for (int otherHour = hour; otherHour <= hour; otherHour++) //TODO: revert this
+		for (int otherHour = hour - 1; otherHour <= hour + 1; otherHour++)
 		{
 			if (otherHour < 24)
 			{
@@ -430,7 +429,6 @@ void postStatistics()
 					{
 						if (DrivingModes[t2->mode] && t2->group->leader != t2) //If t2 is a driver and not a leader
 						{
-							//TODO: include leader's driving distance to pick up everyone
 							VMTReduction += distanceBetween(t2->origin, t2->destination); //Add its distance to saved VMT count
 						}
 					}
@@ -615,12 +613,22 @@ void tripDetailsOutput()
 				all << lines[i] << endl;
 			}
 		}
-		else
-		{
-			++noGroup;
-		}
 	}
 }
+
+/*
+for each person
+	record %of shared trips
+
+for each household
+	count number of joint trips each person takes, add them to person
+
+build a functor to compare people based on % shared trips and # joint trips
+
+
+Beforehand:
+find households with no shared trips or 1 member, these may be freely removed (so remove people based on % trips here)
+*/
 
 //Records total execution time
 void timerWrapper()
