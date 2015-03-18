@@ -220,20 +220,22 @@ void parseTrips()
 		trip.destination = q.parseInt();
 		q.parseComma();
 		q.parseComma();
-		trip.minute = q.parseInt();
+		trip.hour = q.parseInt();
 		trip.mode = q.parseInt();
 		all_trips[i].id = i;
 
-		trip.minute *= 60;
-		trip.minute += fastrand() % 60;
+		trip.minute = (trip.hour * 60) + (departprobs->generate(trip.origin, trip.hour));
 
 		if (DoableTripModes[trip.mode])
 			trip.doable = true;
 
-		if (trip.isShareable())
+		if (ExecutionMode == 0)
 		{
-			(*organized)[trip.minute][trip.origin][trip.destination].push_back(&all_trips[i]);
-			shareable++;
+			if (trip.isShareable())
+			{
+				(*organized)[trip.hour][trip.origin][trip.destination].push_back(&all_trips[i]);
+				shareable++;
+			}
 		}
 
 		all_people[trip.perid].tours[trip.tourid]->trips.push_back(&all_trips[i]);

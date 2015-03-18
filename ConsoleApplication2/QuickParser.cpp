@@ -9,13 +9,14 @@ using namespace std;
 //Sets up a file for parsing
 QuickParser::QuickParser(string filename)
 {
-	Timer timeit("Loading " + filename);
+	cout << "Loading " << filename << endl;
+	//Timer timeit("Loading " + filename);
 	//Open file
 	FILE* fp = new FILE();
 	int err = fopen_s(&fp, filename.c_str(), "rb");
 	if (fp == NULL)
 	{
-		cout << "Error " << err << " when opening file!";
+		cout << "Error " << err << " when opening " << filename << endl;
 		pause();
 		exit(0);
 	}
@@ -34,7 +35,7 @@ QuickParser::QuickParser(string filename)
 	fclose(fp);
 	//delete fp;
 
-	loc = file;
+	loc = file - 1; //TODO ensure subtracting one from this doesn't break anything (my parsing code always skips the current char, normally a ',')
 }
 
 //Sets up a string for parsing. Use .c_str() when passing

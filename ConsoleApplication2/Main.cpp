@@ -10,6 +10,8 @@
 #include "LoadData.h"
 
 #include <iostream>
+#include <iomanip>
+#include <sstream>
 #include "omp.h"
 using namespace std;
 
@@ -23,38 +25,23 @@ void reserveSpace()
 {
 	Timer t("Reserving space for all objects");
 
-	if (ExecutionMode == 0) //if ridesharing
-	{
-		memset(close, 0, DISTANCE_FILE_SIZE);
-		dist = new float[DISTANCE_FILE_SIZE];
-		all_households = new Household[HOUSEHOLD_FILE_SIZE];
-		all_people = new Person[PERSON_FILE_SIZE + 1];
-		all_tours = new Tour[TOUR_FILE_SIZE];
-		all_trips = new Trip[TRIP_FILE_SIZE];
-		closePoints = new vector<short>[NUM_LOCATIONS + 1];
+	memset(close, 0, DISTANCE_FILE_SIZE);
+	dist = new float[DISTANCE_FILE_SIZE];
+	all_households = new Household[HOUSEHOLD_FILE_SIZE];
+	all_people = new Person[PERSON_FILE_SIZE + 1];
+	all_tours = new Tour[TOUR_FILE_SIZE];
+	all_trips = new Trip[TRIP_FILE_SIZE];
+	closePoints = new vector<short>[NUM_LOCATIONS + 1];
 
-		organized = new d3(1440, d2(1455, d1(1455, d0())));
-	}
-	else if (ExecutionMode == 1) //if EV
+	organized = new d3(24, d2(1455, d1(1455, d0())));
+
+
+	if (ExecutionMode == 1) //if EV
 	{
-		dist = new float[DISTANCE_FILE_SIZE];
-		all_households = new Household[HOUSEHOLD_FILE_SIZE];
-		all_people = new Person[PERSON_FILE_SIZE + 1];
-		all_tours = new Tour[TOUR_FILE_SIZE];
-		all_trips = new Trip[TRIP_FILE_SIZE];
+
 		all_joint_tours = new Tour[JOINT_TOURS_FILE_SIZE];
 		all_joint_trips = new Trip[JOINT_TRIPS_FILE_SIZE];
 	}
-	/*
-	organized.reserve(1440);
-	for (int i = 0; i < 1440; i++)
-	{
-		organized[i]
-		for (int j = 0; j < 1455; j++)
-		{
-			organized[i][j] = new int[1454];
-		}
-	}*/
 }
 
 //Frees space
@@ -67,7 +54,8 @@ void cleanUp()
 //Compares trips, assuming they're potentially shareable already
 inline bool compareTrips(Trip& trip1, Trip& trip2)
 {
-	return (trip1.perid != trip2.perid);
+	return (trip1.perid != trip2.perid &&
+		trip1.minute - trip2.minute <= MaxSharingTimeDifference);
 }
 
 void EVCheck()
@@ -76,81 +64,60 @@ void EVCheck()
 	for (int i = 0; i < HOUSEHOLD_FILE_SIZE; i++)
 	{
 		Household& hh = all_households[i];
-		for (auto& topair : hh.tours)
+		for (auto& topair : hh.tours) //For each joint tour
 		{
 			Tour& to = *topair.second;
-			for (Trip* t : to.trips)
+			for (Trip* t : to.trips) //For each joint trip
 			{
-				if (DrivingModes[t->mode])
+				if (DrivingModes[t->mode]) //If trip is driving, add its distance to joint miles
 				{
 					hh.jointMilesDriven += distanceBetween(t->origin, t->destination);
 				}
 			}
 		}
 		
-		if (hh.jointMilesDriven > EVAverageRange)
-			hh.viable = false;
-
-		for (Person* p : hh.people)
+		if (hh.jointMilesDriven > EVAverageRange) //if joint miles driven is too far, house is not viable
 		{
-			//Sum up person-miles
-			for (auto& topair : p->tours)
+			hh.viable = false;
+		}
+
+		for (Person* p : hh.people) //For each person in household
+		{
+			for (auto& topair : p->tours) //For each tour
 			{
-				Tour& to = *topair.second;
-				//Tour level checks go here
-				
-				for (Trip*& t1 : to.trips)	//Trip-level checks TODO ensure there's a driver
+				Tour& to = *topair.second;				
+				for (Trip*& t1 : to.trips)	//For each trip
 				{
-					if (DrivingModes[t1->mode])
+					if (DrivingModes[t1->mode]) //If trip is driving, add distance driven to person's miles
 					{
-						double dist = distanceBetween(t1->origin, t1->destination);
-						p->milesDriven += dist; //Sum up how far the person travels
+						p->milesDriven += distanceBetween(t1->origin, t1->destination);; //Sum up how far the person travels
 					}
 				}
 			}
 
-			hh.indivMilesDriven += p->milesDriven;
+			hh.indivMilesDriven += p->milesDriven; //Add person's miles driven to total household miles driven
 
 			if (p->milesDriven > EVAverageRange)	//If the person travels too far, household is not shared
-				hh.viable = false;
-		}
-
-		if (hh.indivMilesDriven + hh.jointMilesDriven > hh.autos * EVAverageRange)
-			hh.viable = false;
-	}
-
-	int count = 0;
-	int total = 0;
-	for (int i = 0; i < HOUSEHOLD_FILE_SIZE; i++)
-	{
-		Household& hh = all_households[i];
-		if (hh.viable)
-			++count;
-		++total;
-	}
-	cout << count << "/" << total << " households were viable, or " << (double)count / total * 100 << "%." << endl;
-
-	//Unshare trips whole household is not shareable
-	/*
-	for (int i = 0; i < HOUSEHOLD_FILE_SIZE; i++)
-	{
-		Household& hh = all_households[i];
-
-		if (!hh.shareable)
-		{
-			for (Person* p : hh.people)
 			{
-				for (auto& topair : p->tours)
-				{
-					Tour& to = *topair.second;
-					for (Trip*& t1 : to.trips)
-					{
-						t1->shareable = 0;
-					}
-				}
+				hh.viable = false;
 			}
 		}
-	}*/
+
+		if (hh.indivMilesDriven + hh.jointMilesDriven > hh.autos * EVAverageRange) //check if entire household drives too far
+		{
+			hh.viable = false;
+		}
+	} //for each household
+
+	int total = 0;
+	for (int i = 0; i < HOUSEHOLD_FILE_SIZE; i++) //Sum up total households vs viable households
+	{											//TODO: Add a new column to household file: viable
+		Household& hh = all_households[i];
+		if (hh.viable)
+			++viableHouseholds;
+	}
+	cout << viableHouseholds << "/" << HOUSEHOLD_FILE_SIZE << " households were viable, or " << setprecision(5) << (double)viableHouseholds / HOUSEHOLD_FILE_SIZE * 100 << "%." << endl;
+
 }
 
 //Parses the sorted trips, builds potential sharing lists
@@ -161,25 +128,25 @@ void analyzeTrips()
 
 	long long int sharedtrips = 0;
 
-	for (int minute = 300; minute < 1440; minute++)
+	for (int hour = 5; hour < 24; hour++)
 	{
-		if(minute % 100 == 0) cout << (double)(minute - 300)/(1140) << "% done" << endl;
+		//if(minute % 100 == 0) cout << (double)(minute - 300)/(1140) << "% done" << endl;
 
-		for (int otherMinute = minute - MaxSharingTimeDifference; otherMinute < minute + MaxSharingTimeDifference; otherMinute++)
+		for (int otherHour = hour - 1; otherHour <= hour + 1; otherHour++)
 		{
-			if (otherMinute < 1440 && otherMinute >= 300)
+			if (otherHour < 24)
 			{
 				for (int origin = 1; origin <= NUM_LOCATIONS; origin++)
 				{
 					for (int destination = 1; destination <= NUM_LOCATIONS; destination++)
 					{
-						for (Trip* trip1 : (*organized)[minute][origin][destination])
+						for (Trip* trip1 : (*organized)[hour][origin][destination])
 						{
 							for (int closeOrigin : closePoints[origin])
 							{
 								for (int closeDestination : closePoints[destination])
 								{
-									for (Trip* trip2 : (*organized)[otherMinute][closeOrigin][closeDestination])
+									for (Trip* trip2 : (*organized)[otherHour][closeOrigin][closeDestination])
 									{
 										if (compareTrips(*trip1, *trip2))
 										{
@@ -462,7 +429,6 @@ void postStatistics()
 					{
 						if (DrivingModes[t2->mode] && t2->group->leader != t2) //If t2 is a driver and not a leader
 						{
-							//TODO: include leader's driving distance to pick up everyone
 							VMTReduction += distanceBetween(t2->origin, t2->destination); //Add its distance to saved VMT count
 						}
 					}
@@ -492,6 +458,7 @@ void postStatistics()
 		outf << "Minimizing group size" << endl;
 
 	outf << "Total trips: " << TRIP_FILE_SIZE << endl;
+	
 	outf << "Shareable trips (precondition): " << shareable << endl;
 	outf << "Trips with at least one potentially shared trip: " << potentialSharing << endl;
 	outf << "Trips with at least one actually shared trip (before tour-level checks): " << sharingBeforeTourLevel << endl;
@@ -532,55 +499,136 @@ void tripSharingOutput()
 	}
 }
 
+void writeTripLine(string& line, ofstream& outf, Trip& t)
+{
+	if (t.group)
+	{
+		if (t.group->trips.size() > 1)
+		{
+			outf << lineModify(line, "5") << endl;
+		}
+		else
+		{
+			outf << line << endl;
+		}
+	}
+	else
+	{
+		cout << "Orphaned trip!" << endl;
+	}
+	/*
+	stringstream output;
+	if (t.group)
+	{
+		if (t.group->trips.size() > 1)
+		{
+			if (t.group->leader == &t)
+				output << lineModify(line, "5");
+			else
+				output << line;
+
+			output << ", " << t.group->trips.size() << ",";
+			for (Trip* t2 : t.group->trips)
+			{
+				output << " " << t2->id;
+			}
+			output << endl;
+		}
+		else
+		{
+			output << line << ", 1, " << t.id << endl;
+		}
+	}
+	if (abs(TRIP_FILE_SIZE - t.id) < 20) cout << output.str();
+	outf << output.str();*/
+}
+
 //Writes trip details out to files
 void tripDetailsOutput()
 {
 	Timer ti("Writing trip details");
 
-	ifstream inf(TRIP_FILE);
 	string* lines;
 	lines = new string[TRIP_FILE_SIZE];
+
 	string line;
-	getline(inf, line);	///Read Header
+	string header;
 
-	ofstream outf(TRIP_DETAILS_FILE);
-	ofstream shared(SHARED_DETAILS_FILE);
-	ofstream unshared(UNSHARED_DETAILS_FILE);
-	outf << line << endl;
-	shared << line << endl;
-	unshared << line << endl;
+	ifstream inf(TRIP_FILE);
+	getline(inf, header);	///Read Header
 
-	int count = 0;
 	for (int i = 0; i < TRIP_FILE_SIZE; i++)
 	{
 		getline(inf, line);	//Read all lines of the file into memory
-		lines[count] = line;
-		++count;
+		lines[i] = line;
 	}
 
+	if (WriteTripDetails)
+	{
+		ofstream both(TRIP_DETAILS_FILE);
+		ofstream shared(SHARED_DETAILS_FILE);
+		ofstream unshared(UNSHARED_DETAILS_FILE);
+		both << header << endl;
+		shared << header << endl;
+		unshared << header << endl;
+
+		for (int i = 0; i < TRIP_FILE_SIZE; i++)
+		{
+			Trip& t = all_trips[i];
+			if (t.group)	//If t has a group (all should)
+			{
+				if (t.group->trips.size() > 1)	//If t is sharing with others
+				{
+					if (t.group->leader == &t)	//If t is a leader
+					{
+						string line = lineModify(lines[i], "5");//Write line to file, changing trip mode to 5
+						both << line << endl;
+						shared << line << endl;
+					}
+				}
+				else //if trip is not sharing with others
+				{
+					both << lines[i] << endl;	//Write line to file normally
+					unshared << lines[i] << endl;
+				}
+			} //if t.group
+		} //for each trip
+	}
+
+	cout << "Opening " << ALL_TRIP_DETAILS_FILE << endl;
+	ofstream all(ALL_TRIP_DETAILS_FILE);
+	all << header << endl;
+	int noGroup = 0;
 	for (int i = 0; i < TRIP_FILE_SIZE; i++)
 	{
 		Trip& t = all_trips[i];
-		if (t.group)	//If t has a group (all should)
+		if (t.group)
 		{
-			if (t.group->trips.size() > 1)	//If t is sharing with others
+			if (t.group->trips.size() > 1) //If trip is in a sharing group, change its mode and output its details
 			{
-				if (t.group->leader == &t)	//If t is a leader
-				{					
-					//Write line to file, changing trip mode to 5
-					string line = lineModify(lines[i], "5");
-					outf << line << endl;
-					shared << line << endl;
-				}
+				all << lineModify(lines[i], "5") << endl;
 			}
-			else //if trip is not sharing with others
+			else //Otherwise just output its details
 			{
-				outf << lines[i] << endl;	//Write line to file normally
-				unshared << lines[i] << endl;
+				all << lines[i] << endl;
 			}
-		} //if t.group
-	} //for each trip
+		}
+	}
 }
+
+/*
+for each person
+	record %of shared trips
+
+for each household
+	count number of joint trips each person takes, add them to person
+
+build a functor to compare people based on % shared trips and # joint trips
+
+
+Beforehand:
+find households with no shared trips or 1 member, these may be freely removed (so remove people based on % trips here)
+*/
 
 //Records total execution time
 void timerWrapper()
@@ -591,6 +639,8 @@ void timerWrapper()
 	{
 		reserveSpace();
 
+
+		departprobs = new DepartProbability();
 		parseClosePoints();
 		parsePeople();
 		parseTours();
@@ -605,14 +655,14 @@ void timerWrapper()
 
 		countMiles();
 		postStatistics();	//DataPoints.txt - shared trip counts, etc.
-		if (WriteTripDetails)
-			tripDetailsOutput(); //TripsOutput.txt - each trip's full details, after sharing
+		tripDetailsOutput(); //TripsOutput.txt - each trip's full details, after sharing
 
 		if (WriteTripSharing)
 			tripSharingOutput(); //TripSharing.txt - each trip's actual sharing list
 	}
 	else if (ExecutionMode == 1) //if EV
 	{
+		departprobs = new DepartProbability();
 		reserveSpace();
 		parseDistances();
 		parseHouseholds();
@@ -622,6 +672,9 @@ void timerWrapper()
 		parseJointTours();
 		parseJointTrips();
 		EVCheck();
+		ofstream outf(DATA_FILE);
+		outf << "EV Algorithm viable households: " << viableHouseholds << "/" << HOUSEHOLD_FILE_SIZE 
+			 << " households were viable, or " << setprecision(5) << (double)viableHouseholds / HOUSEHOLD_FILE_SIZE * 100 << "%." << endl;
 	}
 }
 

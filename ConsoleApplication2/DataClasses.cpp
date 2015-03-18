@@ -3,16 +3,118 @@
 #include "FastRand.h"
 #include "Globals.h"
 #include "MiscFunctions.h"
+#include "Timer.h"
 
 #include <map>
 #include <vector>
 #include <unordered_set>
 #include <iostream>
+#include <fstream>
 using namespace std;
 
 void reCheckTour(Tour& to);
 void checkTour(Tour& to);
 
+//Generate a random minute offset, based on observed departure quartiles
+int DepartProbability::generate(int zone, int hour)
+{
+	int county = zoneToCounty(zone);
+	int probBlock = hourToBlock(hour);
+
+	int rand = fastrand() % 100;
+	int quartile = 0;
+	vector<int>& prob = probs[county]; //probability set of interest
+	for (int i = 0; i < 5; i++)
+	{
+		if (rand < prob[probBlock * 4 + quartile])	//go to the right set of 4 probabilities, then check if we belong in that quartile
+			break;
+		quartile++; //loop until we're in the right one
+	} 
+
+	return quartile * 15 + (fastrand() % 15); //return a random minute in that quartile
+}
+
+//Convert an hour to a probability block (chunks of hours)
+int DepartProbability::hourToBlock(int hour)
+{
+	if (hour >= 3)
+	{
+		if (hour < 6)
+		{
+			return 0;
+		}
+		else if (hour < 10)
+		{
+			return 1;
+		}
+		else if (hour < 15)
+		{
+			return 2;
+		}
+		else if (hour < 19)
+		{
+			return 3;
+		}
+		else
+		{
+			return 4;
+		}
+	}
+	else
+	{
+		return 4;
+	}
+}
+
+//Convert a zone (1-1454) to a county
+int DepartProbability::zoneToCounty(int zone)
+{
+	if (zone <= 190)
+		return 75;
+	else if (zone <= 346)
+		return 81;
+	else if (zone <= 714)
+		return 85;
+	else if (zone <= 1039)
+		return 1;
+	else if (zone <= 1210)
+		return 13;
+	else if (zone <= 1290)
+		return 95;
+	else if (zone <= 1317)
+		return 55;
+	else if (zone <= 1403)
+		return 97;
+	else if (zone <= 1454)
+		return 41;
+	return -1;
+}
+
+//Loads probabilities into memory
+DepartProbability::DepartProbability()
+{
+	Timer t("Loading depart time probabilities");
+
+	QuickParser q2(DEPART_PROBABILITY_FILE);
+
+	for (int i = 0; i < 9; i++) //For each county
+	{
+		int county = q2.parseInt();	//Get county id
+		for (int j = 0; j < 5; j++) //For each block of hours
+		{
+			int val = 0; //start probability at 0
+			for (int k = 0; k < 4; k++)
+			{
+				val += q2.parseInt(); //increment for each probability seen
+				if (k == 3) val = 100;	//ensure you end on 100%. prevents off-by-one errors (99, 101)
+				probs[county].push_back(val);
+			}
+		}
+		q2.parseNewLine();
+	}
+}
+
+//Blank trip constuctor
 Trip::Trip()
 {
 	group = NULL;
@@ -66,9 +168,6 @@ void Trip::setDoable(bool set, bool recheckTour)
 	}
 }
 
-
-
-
 Tour::Tour()
 {
 	trips.reserve(5);
@@ -83,7 +182,7 @@ Person::Person()
 Household::Household()
 {
 	people.reserve(5);
-	shareable = true;
+	viable = true;
 	jointMilesDriven = 0;
 	indivMilesDriven = 0;
 }

@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #include "FastRand.h"
-
+/*
 unsigned long fastrand(void)
 {
 	unsigned long t;
@@ -13,4 +13,5 @@ unsigned long fastrand(void)
 	y = z;
 	z = t ^ x ^ y;
 	return z;
-}
+}*/
+
