@@ -13,6 +13,7 @@ using namespace std;
 
 
 class VGroup;
+
 struct Trip
 {
 	//vars from file:

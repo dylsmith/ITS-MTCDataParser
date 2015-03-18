@@ -52,8 +52,7 @@ void parseClosePoints()
 
 void parseHouseholds()
 {
-	QuickParser q(HOUSEHOLD_FILE);
-
+	QuickParser q(HOUSEHOLD_FILE)
 	Timer timeit("Parsing households");
 
 	for (int i = 0; i < HOUSEHOLD_FILE_SIZE; i++)
