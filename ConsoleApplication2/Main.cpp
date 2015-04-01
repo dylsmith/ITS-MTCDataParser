@@ -55,7 +55,9 @@ void cleanUp()
 inline bool compareTrips(Trip& trip1, Trip& trip2)
 {
 	return (trip1.perid != trip2.perid &&
-		trip1.minute - trip2.minute <= MaxSharingTimeDifference);
+		abs(trip1.minute - trip2.minute) <= MaxSharingTimeDifference &&
+		distanceBetween(trip1.origin, trip2.origin) < CLOSE_DISTANCE &&
+		distanceBetween(trip1.destination, trip2.destination) < CLOSE_DISTANCE);
 }
 
 void EVCheck()
@@ -123,36 +125,37 @@ void EVCheck()
 //Parses the sorted trips, builds potential sharing lists
 void analyzeTrips()
 {
+	if (largeCalculations)
+		return;
 	//For each trip, add other trips with the same hour and similar OD pairs to potential sharing
 	Timer ct("Analyzing trips");
 
 	long long int sharedtrips = 0;
+	const int gran = 100000000;
 
+	/*
 	for (int hour = 5; hour < 24; hour++)
 	{
-		//if(minute % 100 == 0) cout << (double)(minute - 300)/(1140) << "% done" << endl;
-
-		for (int otherHour = hour - 1; otherHour <= hour + 1; otherHour++)
+		cout << "Hour " << hour << endl;
+		for (int otherHour = hour - 1; otherHour <= hour + 1 && otherHour < 24; otherHour++)
 		{
-			if (otherHour < 24)
+			for (int origin = 1; origin <= NUM_LOCATIONS; origin++)
 			{
-				for (int origin = 1; origin <= NUM_LOCATIONS; origin++)
+				for (int destination = 1; destination <= NUM_LOCATIONS; destination++)
 				{
-					for (int destination = 1; destination <= NUM_LOCATIONS; destination++)
+					for (Trip* trip1 : (*organized)[hour][origin][destination])
 					{
-						for (Trip* trip1 : (*organized)[hour][origin][destination])
+						for (int closeOrigin : closePoints[origin])
 						{
-							for (int closeOrigin : closePoints[origin])
+							for (int closeDestination : closePoints[destination])
 							{
-								for (int closeDestination : closePoints[destination])
+								for (Trip* trip2 : (*organized)[otherHour][closeOrigin][closeDestination])
 								{
-									for (Trip* trip2 : (*organized)[otherHour][closeOrigin][closeDestination])
+									if (compareTrips(*trip1, *trip2))
 									{
-										if (compareTrips(*trip1, *trip2))
-										{
-											trip1->potentialSharing.push_back(trip2->id);
-											sharedtrips++;
-										}
+										trip1->potentialSharing.push_back(trip2->id);
+										if(++sharedtrips % gran == 0) cout << sharedtrips << endl;
+
 									}
 								}
 							}
@@ -161,7 +164,30 @@ void analyzeTrips()
 				}
 			}
 		}
+	}*/
+	for (int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
+	{
+		Trip& t1 = all_trips[t1id];
+		for (int hour = t1.hour - 1; hour <= t1.hour + 1 && hour < 24; hour++)
+		{
+			for (int closeOrigin : closePoints[t1.origin])
+			{
+				for (int closeDestination : closePoints[t1.destination])
+				{
+					for (Trip* t2 : (*organized)[hour][closeOrigin][closeDestination])
+					{
+						if (compareTrips(t1, *t2))
+						{
+							t1.potentialSharing.push_back(t2->id);
+							if (++sharedtrips % gran == 0) cout << sharedtrips << endl;
+						}
+					}
+				}
+			}
+		}
 	}
+
+	cout << endl;
 	cout << "Each trip could potentially share with " << (((long double)sharedtrips / TRIP_FILE_SIZE)) << " other trips, on average." << endl;
 }
 
@@ -197,13 +223,40 @@ void addToSharing(Trip& t1)
 {
 	if (t1.group == NULL) //if trip doesn't have a group yet
 	{
-		for (int t2id : t1.potentialSharing) //for each potentially shared trip
+
+		if (largeCalculations)
 		{
-			Trip& t2 = all_trips[t2id];
-			if (t2.group && t2.group->canAddTrip(t1)) //if trip can share with t2's group, add it
+			for (int hour = t1.hour - 1; hour <= t1.hour + 1 && hour < 24; hour++)
 			{
-				t2.group->addTrip(t1, false);
-				return;
+				for (int closeOrigin : closePoints[t1.origin])
+				{
+					for (int closeDestination : closePoints[t1.destination])
+					{
+						for (Trip* t2 : (*organized)[hour][closeOrigin][closeDestination])
+						{
+							if (compareTrips(t1, *t2))
+							{
+								if (t2->group && t2->group->canAddTrip(t1)) //if trip can share with t2's group, add it
+								{
+									t2->group->addTrip(t1, false);
+									return;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			for (int t2id : t1.potentialSharing) //for each potentially shared trip
+			{
+				Trip& t2 = all_trips[t2id];
+				if (t2.group && t2.group->canAddTrip(t1)) //if trip can share with t2's group, add it
+				{
+					t2.group->addTrip(t1, false);
+					return;
+				}
 			}
 		}
 
@@ -214,12 +267,37 @@ void addToSharing(Trip& t1)
 		//if trip is driving, try to add each potentialsharing group to it, if possible
 		if (DrivingModes[t1.mode])
 		{
-			for (int t2id : t1.potentialSharing)
+			if (largeCalculations)
 			{
-				Trip& t2 = all_trips[t2id];
-				if (t1.group->canAddTrip(t2))
+				for (int hour = t1.hour - 1; hour <= t1.hour + 1 && hour < 24; hour++)
 				{
-					t1.group->addTrip(t2, false);
+					for (int closeOrigin : closePoints[t1.origin])
+					{
+						for (int closeDestination : closePoints[t1.destination])
+						{
+							for (Trip* t2 : (*organized)[hour][closeOrigin][closeDestination])
+							{
+								if (compareTrips(t1, *t2))
+								{
+									if (t1.group->canAddTrip(*t2))
+									{
+										t1.group->addTrip(*t2, false);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			else
+			{
+				for (int t2id : t1.potentialSharing)
+				{
+					Trip& t2 = all_trips[t2id];
+					if (t1.group->canAddTrip(t2))
+					{
+						t1.group->addTrip(t2, false);
+					}
 				}
 			}
 		}
@@ -233,11 +311,34 @@ void formGroup(Trip& t1)	//Returns true if at least one other trip is added. Wil
 	if (DrivingModes[t1.mode] && t1.group == NULL)
 	{
 		t1.group = new VGroup(t1); //Give it a group, and add any potentially shared trips that can share with its group
-		for (int t2id : t1.potentialSharing)
+		if (largeCalculations)
 		{
-			Trip& t2 = all_trips[t2id];
-			if (t1.group->canAddTrip(t2)) 
-				t1.group->addTrip(t2, false);
+			for (int hour = t1.hour - 1; hour <= t1.hour + 1 && hour < 24; hour++)
+			{
+				for (int closeOrigin : closePoints[t1.origin])
+				{
+					for (int closeDestination : closePoints[t1.destination])
+					{
+						for (Trip* t2 : (*organized)[hour][closeOrigin][closeDestination])
+						{
+							if (compareTrips(t1, *t2))
+							{
+								if (t1.group->canAddTrip(*t2))
+									t1.group->addTrip(*t2, false);
+							}
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			for (int t2id : t1.potentialSharing)
+			{
+				Trip& t2 = all_trips[t2id];
+				if (t1.group->canAddTrip(t2))
+					t1.group->addTrip(t2, false);
+			}
 		}
 	}
 }
@@ -338,14 +439,41 @@ void shareTrips2()
 			Trip& t1 = all_trips[t1id];
 			if (t1.group == NULL) //if t1 has a group
 			{
-				for (int t2id : t1.potentialSharing) //for each trip t1 might share with
+				if (largeCalculations)
 				{
-					Trip& t2 = all_trips[t2id];
-					if (t2.group && t2.group->canAddTrip(t1)) //if t2 has a group and can accept t1
+					for (int hour = t1.hour - 1; hour <= t1.hour + 1 && hour < 24; hour++)
 					{
-						t2.group->addTrip(t1, false); //add t1 to t2's group
-						reshared++;
-						break;
+						for (int closeOrigin : closePoints[t1.origin])
+						{
+							for (int closeDestination : closePoints[t1.destination])
+							{
+								for (Trip* t2 : (*organized)[hour][closeOrigin][closeDestination])
+								{
+									if (compareTrips(t1, *t2))
+									{
+										if (t2->group && t2->group->canAddTrip(t1)) //if t2 has a group and can accept t1
+										{
+											t2->group->addTrip(t1, false); //add t1 to t2's group
+											reshared++;
+											break;
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+				else
+				{
+					for (int t2id : t1.potentialSharing) //for each trip t1 might share with
+					{
+						Trip& t2 = all_trips[t2id];
+						if (t2.group && t2.group->canAddTrip(t1)) //if t2 has a group and can accept t1
+						{
+							t2.group->addTrip(t1, false); //add t1 to t2's group
+							reshared++;
+							break;
+						}
 					}
 				}
 			}

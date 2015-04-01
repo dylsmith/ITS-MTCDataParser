@@ -35,7 +35,7 @@ QuickParser::QuickParser(string filename)
 	fclose(fp);
 	//delete fp;
 
-	loc = file - 1; //TODO ensure subtracting one from this doesn't break anything (my parsing code always skips the current char, normally a ',')
+	loc = file - 1; 
 }
 
 //Sets up a string for parsing. Use .c_str() when passing

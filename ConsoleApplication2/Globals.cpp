@@ -7,16 +7,17 @@
 using namespace std;
 
 int ExecutionMode = 0; // 0 = ridesharing, 1 = EV
+bool largeCalculations = false; //If true, will determine trip sharing on-the-fly rather than saving sharing sets in memory
 int g_seed = 1; //Random seed. This determines the set of random numbers generated.
 
-string ALL_TRIP_DETAILS_FILE = "D:\\MTC_BASE\\PostProcess\\AllTripDetails.csv"; //All trips printed out here, with modes changed to '5' if in a group
-string DATA_FILE = "D:\\MTC_BASE\\PostProcess\\DataPoints.txt";//Important data points written here
-string TRIP_SHARING_FILE = "D:\\MTC_BASE\\PostProcess\\TripSharing.txt";//Each tripid and its actual sharing list will be written to this file
-bool WriteTripSharing = false;
-string TRIP_DETAILS_FILE = "D:\\MTC_BASE\\PostProcess\\TripDetails.csv";	//Shared trips will be merged (and mode changed to 5), unshared trips left intact, and written to this
-string SHARED_DETAILS_FILE = "D:\\MTC_BASE\\PostProcess\\SharedTripDetails.csv"; //Split versions of above
-string UNSHARED_DETAILS_FILE = "D:\\MTC_BASE\\PostProcess\\UnsharedTripDetails.csv";
-bool WriteTripDetails = false;
+string ALL_TRIP_DETAILS_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\min\\AllTripDetails.csv"; //All trips printed out here, with modes changed to '5' if in a group
+string DATA_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\min\\DataPoints.txt";//Important data points written here
+string TRIP_SHARING_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\min\\TripSharing.txt";//Each tripid and its actual sharing list will be written to this file
+bool WriteTripSharing = true;
+string TRIP_DETAILS_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\min\\TripDetails.csv";	//Shared trips will be merged (and mode changed to 5), unshared trips left intact, and written to this
+string SHARED_DETAILS_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\min\SharedTripDetails.csv"; //Split versions of above
+string UNSHARED_DETAILS_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\min\\UnsharedTripDetails.csv";
+bool WriteTripDetails = true;
 
 struct DepartProbability;
 
@@ -44,12 +45,12 @@ int DoableTripModes[] = { 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 
 
 //Trip sharing requirements:  (ordered by computational complexity)
 
-double CLOSE_DISTANCE = 1.0;	//Two points must be within this to be considered closePoints. Make sure to update vector reserve() calls when changing this
+double CLOSE_DISTANCE = 1;	//Two points must be within this to be considered closePoints. Make sure to update vector reserve() calls when changing this
 int MaxNumStops = 6;	//Number of stops must be less than or equal to this
-int MaxIncome = 200000; //Income must be below this
+int MaxIncome = 1000000000; //Income must be below this
 float MinDistanceTraveled = 2.5;	//Distance between origin and dest. must be above this
 int TripModes[] = { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }; //1 represents that array index is shareable. Right now, indexes modes 1-7 (and not 0) are shareable
-unsigned int RandomFailChance = 20; //%chance a trip will randomly not be shareable. This should be an integer from 0-100 
+unsigned int RandomFailChance = 0; //%chance a trip will randomly not be shareable. This should be an integer from 0-100 
 set<string> TripPurposes = { "Home", "work_low", "work_med", "work_high", "work_very high", "university", "school_high", "school_grade", "atwork_business", "atwork_eat", "atwork_maint", \
 "eatout", "escort_kids", "escort_no kids", "othdiscr", "othmaint", "shopping", "social" }; //Simply list acceptable purposes here
 

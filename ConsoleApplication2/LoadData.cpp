@@ -35,16 +35,13 @@ void parseClosePoints()
 	//Check non-diagonal points where k > i. Graph is symmetric, so we don't need to check k < i
 	for (int i = 1; i <= NUM_LOCATIONS; i++)
 	{
-		closePoints[i].push_back(i);
-		for (int k = i + 1; k <= NUM_LOCATIONS; k++)
+		for (int k = 1; k <= NUM_LOCATIONS; k++)
 		{
 
 			if (distanceBetween(i, k) < CLOSE_DISTANCE)
 			{
 				closePoints[i].push_back(k);
-				closePoints[k].push_back(i);
 				close[i][k] = 1;
-				close[k][i] = 1;
 			}
 		}
 	}

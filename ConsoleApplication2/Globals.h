@@ -11,6 +11,7 @@
 using namespace std;
 
 extern int ExecutionMode; //0 = ridesharing, 1 = EV
+extern bool largeCalculations; //If true, will determine trip sharing on-the-fly rather than saving sharing sets in memory
 extern int g_seed;
 
 struct Trip; struct DepartProbability;
