@@ -30,6 +30,7 @@ struct DepartProbability
 };
 
 class VGroup;
+
 struct Trip
 {
 	//vars from file:
