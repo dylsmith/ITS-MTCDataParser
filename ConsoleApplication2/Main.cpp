@@ -22,6 +22,8 @@ typedef vector<d0> d1;
 typedef vector<d1> d2;
 typedef vector<d2> d3;
 
+
+
 //Reserves space for all data
 void reserveSpace()
 {
@@ -40,7 +42,11 @@ void reserveSpace()
 	all_trips = new Trip[TRIP_FILE_SIZE];
 	closePoints = new vector<short>[NUM_LOCATIONS + 1];
 
-	organized = new d3(24, d2(1455, d1(1455, d0())));
+	for (int i = 0; i < 1455; i++)
+	{
+		organized[i] = new vector<Trip*>[2095200]();
+	}
+	//organized = new vector<Trip*>[size]();//new d3(24*60, d2(1455, d1(1455, d0())));
 
 	all_joint_tours = new Tour[JOINT_TOURS_FILE_SIZE];
 	all_joint_trips = new Trip[JOINT_TRIPS_FILE_SIZE];
@@ -56,10 +62,10 @@ void cleanUp()
 //Compares trips, assuming they're potentially shareable already
 inline bool compareTrips(Trip& trip1, Trip& trip2)
 {
-	return (trip1.perid != trip2.perid &&
-		abs(trip1.minute - trip2.minute) <= MaxSharingTimeDifference &&
-		distanceBetween(trip1.origin, trip2.origin) < CLOSE_DISTANCE &&
-		distanceBetween(trip1.destination, trip2.destination) < CLOSE_DISTANCE);
+	return (trip1.perid != trip2.perid);//&&
+		//abs(trip1.minute - trip2.minute) <= MaxSharingTimeDifference &&
+		//distanceBetween(trip1.origin, trip2.origin) < CLOSE_DISTANCE &&
+		//distanceBetween(trip1.destination, trip2.destination) < CLOSE_DISTANCE);
 }
 
 void EVCheck()
@@ -165,20 +171,22 @@ struct
 } PotentialSharingSort;
 
 void findPotentialSharing(Trip &t1)
-{
-	
-	int hour = t1.hour;
-	for (int hour = t1.hour - 1; hour <= t1.hour + 1 && hour < 24; hour++)
+{	
+	for (int minute = t1.minute - MaxSharingTimeDifference; minute <= t1.minute + MaxSharingTimeDifference; minute++)
 	{
+		if (minute < 0 || minute >= 24 * 60)
+			continue;
+
 		for (int closeOrigin : closePoints[t1.origin])
 		{
 			for (int closeDestination : closePoints[t1.destination])
 			{
-				for (Trip* t2 : (*organized)[hour][closeOrigin][closeDestination])
+				for (Trip* t2 : sortedTrips(minute, closeOrigin, closeDestination))
+				//for (Trip* t2 : (*organized)[minute][closeOrigin][closeDestination])
 				{
 					if (compareTrips(t1, *t2))
-					{
-						#pragma omp critical
+					{			
+						//#pragma omp critical
 						t1.potentialSharing->push_back(t2->id);
 					}
 				}
@@ -196,8 +204,11 @@ void analyzeTrips()
 	Timer ct("Analyzing trips");
 
 //#pragma omp parallel for
+	int mod = TRIP_FILE_SIZE / 200;
+	int count = 0;
 	for (int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
 	{
+		if (t1id % mod == 0) cout << ++count;
 		findPotentialSharing(all_trips[t1id]);
 	}
 }
@@ -238,6 +249,7 @@ void addToSharing(Trip& t1)
 		if (largeCalculations)
 		{
 			t1.potentialSharing = new vector<int>();
+			t1.potentialSharing->reserve(130);
 			findPotentialSharing(t1);
 		}
 
@@ -285,6 +297,7 @@ void formGroup(Trip& t1)	//Returns true if at least one other trip is added. Wil
 		if (largeCalculations)
 		{
 			t1.potentialSharing = new vector<int>();
+			t1.potentialSharing->reserve(130);
 			findPotentialSharing(t1);
 		}
 		for (int t2id : *t1.potentialSharing)
@@ -292,13 +305,7 @@ void formGroup(Trip& t1)	//Returns true if at least one other trip is added. Wil
 			Trip& t2 = all_trips[t2id];
 			if (t1.group->canAddTrip(t2))
 			{
-				//#pragma omp critical
-				{			
-					if (t1.group->canAddTrip(t2))
-					{
-						t1.group->addTrip(t2, false);
-					}
-				}
+				t1.group->addTrip(t2, false);
 			}
 		}
 		if (largeCalculations)
@@ -342,26 +349,33 @@ void checkTour(Tour& to)
 	}
 }
 
-
-
-
 //Tries to form actual sharing groups for drivers
 void shareTrips()
 {
 	Timer ti("Sharing trips");
 	time_t start = time(0);
+	time_t end;
 	//Try to form a group for all trips
 	int done = 0;
-	int step = 100000;
-#pragma omp parallel for 
+	int step = 100;
+	int count = 0;
+	//#pragma omp parallel for firstprivate(count)
 	for (int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
 	{
+		if (++count == step)
+		{
+			count = 0;
+			//#pragma omp atomic
+			done += step;
+			cout << done << "/" << TRIP_FILE_SIZE << endl;
+		}
+		/*
 		if (t1id % step == 0)
 		{
 			//cout << t1id << "/" << TRIP_FILE_SIZE << endl;
-			//cout << tod() << t1id << "/" << TRIP_FILE_SIZE << endl;
-			/*
-			time_t end = time(0);
+			cout << tod() << t1id << "/" << TRIP_FILE_SIZE << endl;
+			
+			end = time(0);
 			int timepassed = end - start;
 			start = time(0);
 			int trips_left = TRIP_FILE_SIZE - t1id;
@@ -370,13 +384,14 @@ void shareTrips()
 			int secondsleft = trips_left / ((double)step / timepassed);
 			int minutesleft = secondsleft / 60;
 			secondsleft %= 60;
-			cout << minutesleft << " minutes " << secondsleft << " seconds left." << endl;*/
-		}
+			cout << minutesleft << " minutes " << secondsleft << " seconds left." << endl;
+		}*/
 		formGroup(all_trips[t1id]);
+		/*
 		#pragma omp atomic
 		++done;
 		if (done % step == 0)
-			cout << done << "/" << TRIP_FILE_SIZE << endl;
+			cout << done << "/" << TRIP_FILE_SIZE << endl;*/
 
 	}
 	
@@ -439,6 +454,7 @@ void shareTrips2()
 				if (largeCalculations)
 				{
 					t1.potentialSharing = new vector<int>();
+					t1.potentialSharing->reserve(130);
 					findPotentialSharing(t1);
 				}
 				for (int t2id : *t1.potentialSharing) //for each trip t1 might share with
@@ -823,6 +839,7 @@ void tryToGroup(Trip& t1)
 	if (largeCalculations)
 	{
 		t1.potentialSharing = new vector<int>();
+		t1.potentialSharing->reserve(130);
 		findPotentialSharing(t1);
 	}
 	for (int t2id : *t1.potentialSharing)

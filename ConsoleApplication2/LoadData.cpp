@@ -12,7 +12,6 @@
 
 using namespace std;
 
-double distanceBetween(int origin, int destination);
 
 void parseDistances()
 {
@@ -35,6 +34,7 @@ void parseClosePoints()
 	parseDistances();
 
 	//Check non-diagonal points where k > i. Graph is symmetric, so we don't need to check k < i
+	int closec = 0;
 	for (int i = 1; i <= NUM_LOCATIONS; i++)
 	{
 		for (int k = 1; k <= NUM_LOCATIONS; k++)
@@ -42,11 +42,13 @@ void parseClosePoints()
 
 			if (distanceBetween(i, k) < CLOSE_DISTANCE)
 			{
+				++closec;
 				closePoints[i].push_back(k);
 				close[i][k] = 1;
 			}
 		}
 	}
+	cout << "Each point is close to " << closec / NUM_LOCATIONS << " other points, on average." << endl;
 }
 
 void parseHouseholds()
@@ -186,20 +188,16 @@ void parseJointTrips()
 	}
 }
 
+vector<Trip*>& sortedTrips(int minute, int origin, int destination)
+{
+	return organized[destination - 1][minute * 1455 + (origin - 1)];
+}
+
 void parseTrips()
 {
 	QuickParser q(TRIP_FILE);
 	Timer timeit("Parsing trips");
 
-	/*
-	for (int i = 5; i < 24; i++)
-	{
-		for (int k = 1; k <= NUM_LOCATIONS; k++)
-		{
-			organized[i][k] = new vector<Trip*>[NUM_LOCATIONS + 1];
-			organized[i][k]->reserve(120);
-		}
-	}*/
 	for (int i = 0; i < TRIP_FILE_SIZE; i++)
 	{
 		Trip& trip = all_trips[i];
@@ -237,7 +235,8 @@ void parseTrips()
 		{
 			if (trip.isShareable())
 			{
-				(*organized)[trip.hour][trip.origin][trip.destination].push_back(&all_trips[i]);
+				sortedTrips(trip.minute, trip.origin, trip.destination).push_back(&all_trips[i]);
+				//(*organized)[trip.minute][trip.origin][trip.destination].push_back(&all_trips[i]);
 				shareable++;
 			}
 		}

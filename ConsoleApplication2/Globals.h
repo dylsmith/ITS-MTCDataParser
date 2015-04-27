@@ -103,7 +103,8 @@ extern Tour* all_joint_tours;
 extern Trip* all_joint_trips;
 extern vector<short>* closePoints;
 extern bool close[1455][1455];
-extern d3* organized;
+extern vector<Trip*>* organized[1455];
+//extern d3* organized;
 extern float* dist;
 extern int shareable;	//Trips that passed the initial checks
 extern int potentialSharing;//Trips with at least one trip it could potentially share with	
