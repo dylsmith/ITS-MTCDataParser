@@ -11,6 +11,7 @@
 using namespace std;
 
 struct Trip;
+
 class VGroup
 {
 public:
@@ -19,6 +20,8 @@ public:
 
 	//Constructs a group with t as leader
 	VGroup(Trip& t);
+
+	~VGroup();
 
 	//If t2 can share with all elements in the group
 	bool canAddTrip(Trip& t2);

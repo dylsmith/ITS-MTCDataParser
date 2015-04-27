@@ -7,6 +7,7 @@
 #include <string>
 
 void pause();
+std::string tod();
 
 class Timer {
 	std::string m_name;

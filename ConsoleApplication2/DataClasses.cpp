@@ -118,7 +118,12 @@ DepartProbability::DepartProbability()
 Trip::Trip()
 {
 	group = NULL;
-	potentialSharing.reserve(4);
+	if (!largeCalculations)
+	{
+		potentialSharing = new vector<int>();
+		potentialSharing->reserve(20);
+
+	}
 	shareable = -1;
 	shared = 1;
 	doable = false;
@@ -137,7 +142,7 @@ bool Trip::isShareable()
 		((fastrand() % 100) + 1) > RandomFailChance &&					//Random chance (random int must be greater than fail chance)
 		TripPurposes.find(purpose) != TripPurposes.end()				//Trip purpose (purpose must be in the set of allowed purposes)
 		);
-	return shareable;
+	return shareable == 1;
 
 }
 
@@ -177,6 +182,9 @@ Tour::Tour()
 Person::Person()
 {
 	milesDriven = 0;
+	double rideShareProb = -97;
+	double householdInteractionProb = -98;
+	double totalScore = -99;
 }
 
 Household::Household()

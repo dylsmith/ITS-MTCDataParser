@@ -8,6 +8,8 @@
 #include "MiscFunctions.h"
 #include "FastRand.h"
 
+#include <omp.h>
+
 using namespace std;
 
 double distanceBetween(int origin, int destination);
@@ -49,7 +51,7 @@ void parseClosePoints()
 
 void parseHouseholds()
 {
-	QuickParser q(HOUSEHOLD_FILE)
+	QuickParser q(HOUSEHOLD_FILE);
 	Timer timeit("Parsing households");
 
 	for (int i = 0; i < HOUSEHOLD_FILE_SIZE; i++)
@@ -60,6 +62,8 @@ void parseHouseholds()
 		q.parseComma();
 		q.parseComma();
 		q.parseComma();
+		//if (hhid >= HOUSEHOLD_FILE_SIZE)
+		//	cout << hhid << " " << HOUSEHOLD_FILE_SIZE << endl;
 		all_households[hhid].autos = q.parseInt();
 
 		all_households[hhid].hhid = hhid;
@@ -154,7 +158,7 @@ void parseTours()
 void parseJointTrips()
 {
 	QuickParser q(JOINT_TRIPS_FILE);
-	Timer timeit("Paring joint trips");
+	Timer timeit("Parsing joint trips");
 
 	for (int i = 0; i < JOINT_TRIPS_FILE_SIZE; i++)
 	{
@@ -196,7 +200,6 @@ void parseTrips()
 			organized[i][k]->reserve(120);
 		}
 	}*/
-
 	for (int i = 0; i < TRIP_FILE_SIZE; i++)
 	{
 		Trip& trip = all_trips[i];
@@ -219,7 +222,11 @@ void parseTrips()
 		q.parseComma();
 		trip.hour = q.parseInt();
 		trip.mode = q.parseInt();
-		all_trips[i].id = i;
+		q.parseComma();
+		trip.category = q.parseString();
+		trip.id = i;
+
+		trip.mandatory = (trip.category == "MANDATORY");
 
 		trip.minute = (trip.hour * 60) + (departprobs->generate(trip.origin, trip.hour));
 

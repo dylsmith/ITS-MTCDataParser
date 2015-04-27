@@ -10,9 +10,17 @@ VGroup::VGroup(Trip& t)
 	trips.push_back(&t);
 }
 
+VGroup::~VGroup()
+{
+	for (Trip* t : trips)
+	{
+		t->group = NULL;
+	}
+}
+
 bool VGroup::canAddTrip(Trip& t2)
 {
-	if ((t2.group && t2.group->trips.size() > 1) || !t2.shared)	//If trip is already sharing with others
+	if ((t2.group && t2.group->trips.size() > 1) || !t2.shared || all_people[t2.perid].totalScore < sharingRequirement)	//If trip is already sharing with others
 		return false;
 
 	if (Maximize)
@@ -115,53 +123,6 @@ void VGroup::removeTrip(Trip& t1)
 						t2->group = new VGroup(*t2);
 					}
 					delete group;
-				}
-			}
-		}
-	}
-}
-
-//Outdated, never worked properly
-void VGroup::removeTripRecursive(Trip& t1)
-{
-	if (t1.shared)
-	{
-		t1.shared = false;
-		t1.setDoable(false);
-		int size = trips.size();
-		if (size == 2)
-		{
-			Trip* t2;
-			if (*trips.begin() == &t1)
-				t2 = *trips.rbegin();
-			else
-				t2 = *trips.begin();
-
-			removeFromTrips(*t2);
-			t2->group = NULL;
-			t2->setDoable(false);
-
-		}
-		else if (size > 2)
-		{
-			removeFromTrips(t1);
-			VGroup* group = t1.group;
-			t1.group = new VGroup(t1);
-			bool foundNewDriver = false;
-			for (Trip* t2 : group->trips)
-			{
-				if (DrivingModes[t2->mode])
-				{
-					foundNewDriver = true;
-					group->leader = t2;
-					break;
-				}
-			}
-			if (!foundNewDriver)
-			{
-				for (Trip* t2 : group->trips)
-				{
-					removeTrip(*t2);
 				}
 			}
 		}

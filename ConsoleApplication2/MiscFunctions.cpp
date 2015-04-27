@@ -68,7 +68,6 @@ bool strictCompare(Trip& t1, Trip& t2)
 	return (distanceBetween(t1.origin, t2.origin) < CLOSE_DISTANCE &&
 		distanceBetween(t1.destination, t2.destination) < CLOSE_DISTANCE &&
 		t1.perid != t2.perid &&
-		//closeMinutes(t1, t2));
 		abs(t1.minute - t2.minute) <= MaxSharingTimeDifference);
 }
 
@@ -158,12 +157,13 @@ void charsinfile()
 int lineCount(string filename)
 {
 	QuickParser q(filename);
-	Timer c(" lines in " + filename);
+	Timer* c = new Timer("\b");
 	int lines = 0;
 	for (int i = 0; i < q.length; i++)
 		if (*(q.file + i) == '\n')
 			lines++;
-	cout << lines;
+	delete c;
+	cout << lines << " lines in " << filename << endl;
 	return lines;
 }
 

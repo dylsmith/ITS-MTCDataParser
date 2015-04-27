@@ -43,16 +43,18 @@ struct Trip
 	int minute;
 	int mode;
 	string purpose;
+	string category;
 
 	//generated vars:
-	vector<int> potentialSharing;
+	vector<int>* potentialSharing;
 	VGroup* group;
 	bool doable;
 	bool shared; 
+	bool mandatory;
 
 	Trip();
 	bool isShareable();
-	void setDoable(bool set, bool recheckTour = true);
+	void setDoable(bool set, bool recheckTour);
 
 	int shareable; //1 = yes, 0 = no, -1 = unknown. potential shareability
 };
@@ -82,6 +84,10 @@ struct Person
 
 	//generated vars:
 	map<int, Tour*> tours;
+
+	double rideShareProb;
+	double householdInteractionProb;
+	double totalScore;
 
 	Person();
 };
