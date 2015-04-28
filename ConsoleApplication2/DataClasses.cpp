@@ -12,7 +12,6 @@
 #include <fstream>
 using namespace std;
 
-void reCheckTour(Tour& to);
 void checkTour(Tour& to);
 
 //Generate a random minute offset, based on observed departure quartiles
@@ -147,27 +146,19 @@ bool Trip::isShareable()
 }
 
 //Sets a trip to be doable or not, recursively following any additions/subtractions
-void Trip::setDoable(bool set, bool recheckTour)
+void Trip::setDoable(bool set)
 {
-
-	if (set == true && doable == false) //if we're making the trip doable
+	#pragma omp critical
 	{
-		doable = true;
-		if (recheckTour)
+		if (set == true) //if we're making the trip doable
 		{
-			Tour& to = *all_people[perid].tours[tourid];
-			reCheckTour(to);
+			doable = true;
 		}
-	}
-	else if (set == false && doable == true)//if we're making the trip not doable
-	{
-		if (!DoableTripModes[mode])
+		else//if we're making the trip not doable
 		{
-			doable = false;
-			if (recheckTour)
+			if (!DoableTripModes[mode])
 			{
-				Tour& to = *all_people[perid].tours[tourid];
-				checkTour(to);
+				doable = false;
 			}
 		}
 	}

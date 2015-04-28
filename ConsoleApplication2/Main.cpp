@@ -15,6 +15,7 @@
 #include <unordered_set>
 #include <sstream>
 #include "omp.h"
+
 using namespace std;
 
 typedef vector<Trip*> d0;
@@ -42,10 +43,8 @@ void reserveSpace()
 	all_trips = new Trip[TRIP_FILE_SIZE];
 	closePoints = new vector<short>[NUM_LOCATIONS + 1];
 
-	for (int i = 0; i < 1455; i++)
-	{
-		organized[i] = new vector<Trip*>[2095200]();
-	}
+	
+	organized = new vector<Trip*>[1455 * 1455 * 24]();
 	//organized = new vector<Trip*>[size]();//new d3(24*60, d2(1455, d1(1455, d0())));
 
 	all_joint_tours = new Tour[JOINT_TOURS_FILE_SIZE];
@@ -57,15 +56,6 @@ void cleanUp()
 {
 	free((void*)close);
 	delete organized;
-}
-
-//Compares trips, assuming they're potentially shareable already
-inline bool compareTrips(Trip& trip1, Trip& trip2)
-{
-	return (trip1.perid != trip2.perid);//&&
-		//abs(trip1.minute - trip2.minute) <= MaxSharingTimeDifference &&
-		//distanceBetween(trip1.origin, trip2.origin) < CLOSE_DISTANCE &&
-		//distanceBetween(trip1.destination, trip2.destination) < CLOSE_DISTANCE);
 }
 
 void EVCheck()
@@ -170,29 +160,39 @@ struct
 	}
 } PotentialSharingSort;
 
+//Compares trips, assuming they're potentially shareable already
+inline bool compareTrips(Trip& trip1, Trip& trip2)
+{
+	return (trip1.perid != trip2.perid &&
+		abs(trip1.minute - trip2.minute) <= MaxSharingTimeDifference);// &&
+	//distanceBetween(trip1.origin, trip2.origin) < CLOSE_DISTANCE &&
+	//distanceBetween(trip1.destination, trip2.destination) < CLOSE_DISTANCE);
+}
+
 void findPotentialSharing(Trip &t1)
 {	
-	for (int minute = t1.minute - MaxSharingTimeDifference; minute <= t1.minute + MaxSharingTimeDifference; minute++)
+	//for (int minute = t1.minute - MaxSharingTimeDifference; minute <= t1.minute + MaxSharingTimeDifference; minute++)
+	//{
+		//if (minute < 0 || minute >= 24 * 60)
+			//continue;
+	for (int hour = t1.hour - 1; hour <= t1.hour + 1; hour++)
 	{
-		if (minute < 0 || minute >= 24 * 60)
+		if (hour < 0 || hour >= 24)
 			continue;
-
 		for (int closeOrigin : closePoints[t1.origin])
 		{
 			for (int closeDestination : closePoints[t1.destination])
 			{
-				for (Trip* t2 : sortedTrips(minute, closeOrigin, closeDestination))
-				//for (Trip* t2 : (*organized)[minute][closeOrigin][closeDestination])
+				for (Trip* t2 : sortedTrips(hour, closeOrigin, closeDestination))
 				{
 					if (compareTrips(t1, *t2))
 					{			
-						//#pragma omp critical
 						t1.potentialSharing->push_back(t2->id);
-					}
-				}
-			}
-		}
-	}
+					}//if trips match up
+				}//for each trip
+			}//for each destination
+		}//for each origin
+	}//for each hour
 }
 
 //Parses the sorted trips, builds potential sharing lists
@@ -213,80 +213,6 @@ void analyzeTrips()
 	}
 }
 
-//Prototypes for addToSharing
-void addToSharing(Trip& t1);
-
-//Checks to see if a tour can be shared again, and does so if needed
-void reCheckTour(Tour& to)
-{
-	int doableTripCount = 0; 
-	for (Trip* t : to.trips) //Count number of doable trips
-		if (t->doable)
-			doableTripCount++;
-
-	//If tour is not shared, has trips, and has enough doable trips
-	if (!to.shared && to.trips.size() > 0 && (((double)doableTripCount / to.trips.size()) >= TourDoableRequirement))
-	{
-		to.shared = 1;
-		//For each trip in the tour, if it's not shared  and is shareable, share it
-		for (Trip*& t : to.trips)
-		{
-			if (!t->shared && t->isShareable())
-			{
-				t->shared = 1;
-				addToSharing(*t);
-			}
-		}
-	}
-}
-
-//Tries to add a trip back to the sharing groups
-void addToSharing(Trip& t1)
-{
-	if (t1.group == NULL) //if trip doesn't have a group yet
-	{
-
-		if (largeCalculations)
-		{
-			t1.potentialSharing = new vector<int>();
-			t1.potentialSharing->reserve(130);
-			findPotentialSharing(t1);
-		}
-
-		for (int t2id : *t1.potentialSharing) //for each potentially shared trip
-		{
-			Trip& t2 = all_trips[t2id];
-			if (t2.group && t2.group->canAddTrip(t1)) //if trip can share with t2's group, add it
-			{
-				t2.group->addTrip(t1, false);
-				return;
-			}
-		}
-
-		//If group is still null, give it a solo group
-		if (t1.group == NULL)
-			t1.group = new VGroup(t1);
-
-		//if trip is driving, try to add each potentialsharing group to it, if possible
-		if (DrivingModes[t1.mode])
-		{
-			for (int t2id : *t1.potentialSharing)
-			{
-				Trip& t2 = all_trips[t2id];
-				if (t1.group->canAddTrip(t2))
-				{
-					t1.group->addTrip(t2, false);
-				}
-			}
-		}
-
-		if (largeCalculations)
-		{
-			delete t1.potentialSharing;
-		}
-	}
-}
-
 //Tries to form a new group around a trip
 void formGroup(Trip& t1)	//Returns true if at least one other trip is added. Will always create t1.actualSharing of some size >= 1
 {
@@ -294,27 +220,54 @@ void formGroup(Trip& t1)	//Returns true if at least one other trip is added. Wil
 	if (DrivingModes[t1.mode] && t1.group == NULL && all_people[t1.perid].totalScore >= sharingRequirement)
 	{
 		t1.group = new VGroup(t1); //Give it a group, and add any potentially shared trips that can share with its group
-		if (largeCalculations)
+
+		/*
+		if (largeCalculations && t1.potentialSharing == NULL)
 		{
 			t1.potentialSharing = new vector<int>();
 			t1.potentialSharing->reserve(130);
 			findPotentialSharing(t1);
-		}
-		for (int t2id : *t1.potentialSharing)
-		{
-			Trip& t2 = all_trips[t2id];
-			if (t1.group->canAddTrip(t2))
-			{
-				t1.group->addTrip(t2, false);
-			}
-		}
+		}*/
 		if (largeCalculations)
 		{
-			delete t1.potentialSharing;
+			for (int hour = t1.hour - 1; hour <= t1.hour + 1; hour++)
+			{
+				if (hour < 0 || hour >= 24)
+					continue;
+				for (int closeOrigin : closePoints[t1.origin])
+				{
+					for (int closeDestination : closePoints[t1.destination])
+					{
+						for (Trip* t2 : sortedTrips(hour, closeOrigin, closeDestination))
+						{
+							if (t1.group->canAddTrip(*t2))
+							{
+								t1.group->addTrip(*t2);
+							}
+						}//for each trip
+					}//for each destination
+				}//for each origin
+			}//for each hour
 		}
+		else
+		{
+			for (int t2id : *t1.potentialSharing)
+			{
+				Trip& t2 = all_trips[t2id];
+				if (t1.group->canAddTrip(t2))
+				{
+					t1.group->addTrip(t2);
+				}
+			}
+		}
+
+		/*
+		if (largeCalculations && t1.potentialSharing != NULL)
+		{
+			delete t1.potentialSharing;
+		}*/
 	}
 }
-
 
 //Checks to see if a tour cannot be shared, and unshares it if needed
 void checkTour(Tour& to)
@@ -357,7 +310,7 @@ void shareTrips()
 	time_t end;
 	//Try to form a group for all trips
 	int done = 0;
-	int step = 100;
+	int step = 50000;
 	int count = 0;
 	//#pragma omp parallel for firstprivate(count)
 	for (int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
@@ -367,7 +320,15 @@ void shareTrips()
 			count = 0;
 			//#pragma omp atomic
 			done += step;
-			cout << done << "/" << TRIP_FILE_SIZE << endl;
+
+			time_t end = time(0);
+			int tg = end - start;
+			if (tg < 1) tg = 1;
+			int secondsleft = (TRIP_FILE_SIZE - t1id) / (done / tg);
+			int minutesleft = secondsleft / 60;
+			secondsleft %= 60;
+
+			cout << done << "/" << TRIP_FILE_SIZE << "  " << minutesleft << " minutes " << secondsleft << " seconds left." << endl;
 		}
 		/*
 		if (t1id % step == 0)
@@ -386,7 +347,8 @@ void shareTrips()
 			secondsleft %= 60;
 			cout << minutesleft << " minutes " << secondsleft << " seconds left." << endl;
 		}*/
-		formGroup(all_trips[t1id]);
+		Trip& t = all_trips[t1id];
+		formGroup(t);
 		/*
 		#pragma omp atomic
 		++done;
@@ -451,27 +413,56 @@ void shareTrips2()
 			Trip& t1 = all_trips[t1id];
 			if (t1.group == NULL) //if t1 has a group
 			{
-				if (largeCalculations)
+				/*
+				if (largeCalculations && t1.potentialSharing == NULL)
 				{
 					t1.potentialSharing = new vector<int>();
 					t1.potentialSharing->reserve(130);
 					findPotentialSharing(t1);
-				}
-				for (int t2id : *t1.potentialSharing) //for each trip t1 might share with
-				{
-					Trip& t2 = all_trips[t2id];
-					if (t2.group && t2.group->canAddTrip(t1)) //if t2 has a group and can accept t1
-					{
-						t2.group->addTrip(t1, false); //add t1 to t2's group
-						reshared++;
-						break;
-					}
-				}			
+				}*/
 
 				if (largeCalculations)
 				{
-					delete t1.potentialSharing;
+					for (int hour = t1.hour - 1; hour <= t1.hour + 1; hour++)
+					{
+						if (hour < 0 || hour >= 24)
+							continue;
+						for (int closeOrigin : closePoints[t1.origin])
+						{
+							for (int closeDestination : closePoints[t1.destination])
+							{
+								for (Trip* t2 : sortedTrips(hour, closeOrigin, closeDestination))
+								{
+									if (t2->group && t2->group->canAddTrip(t1)) //if t2 has a group and can accept t1
+									{
+										t2->group->addTrip(t1); //add t1 to t2's group
+										reshared++;
+										break;
+									}
+								}//for each trip
+							}//for each destination
+						}//for each origin
+					}//for each hour
 				}
+				else
+				{
+					for (int t2id : *t1.potentialSharing) //for each trip t1 might share with
+					{
+						Trip& t2 = all_trips[t2id];
+						if (t2.group && t2.group->canAddTrip(t1)) //if t2 has a group and can accept t1
+						{
+							t2.group->addTrip(t1); //add t1 to t2's group
+							reshared++;
+							break;
+						}
+					}
+				}
+
+				/*
+				if (largeCalculations && t1.potentialSharing != NULL)
+				{
+					delete t1.potentialSharing;
+				}*/
 			}
 		}
 		
@@ -539,7 +530,7 @@ void postStatistics()
 	for (int i = 0; i < TRIP_FILE_SIZE; i++)
 	{
 		Trip& t = all_trips[i];
-		if (t.potentialSharing->size() > 0)	
+		if (t.potentialSharing && t.potentialSharing->size() > 0)	
 			potentialSharing++;
 
 		if (t.group) //if t has a group
@@ -728,7 +719,6 @@ build a functor to compare people based on % shared trips and # joint trips
 Beforehand:
 find households with no shared trips or 1 member, these may be freely removed (so remove people based on % trips here)
 */
-#include <algorithm>
 
 struct
 {
@@ -750,8 +740,6 @@ int PeopleCompare(const void* a, const void* b)
 	else
 		return -1;
 }
-
-#include <sstream>
 
 void writePeopleFile(unordered_set<int> &sharedPeople)
 {
@@ -792,7 +780,6 @@ void writePeopleFile(unordered_set<int> &sharedPeople)
 	}
 }
 
-
 double rideShareProbability(Person& p)
 {
 	double totalTripCount = 0;
@@ -829,31 +816,58 @@ double householdInteractionProbability(Person& p)
 	return householdInteractionProb;
 }
 
-
 void tryToGroup(Trip& t1)
 {
 	if (!t1.group)
 		t1.group = new VGroup(t1); //Give it a group, and add any potentially shared trips that can share with its group
 
 
-	if (largeCalculations)
+	/*
+	if (largeCalculations && t1.potentialSharing == NULL)
 	{
 		t1.potentialSharing = new vector<int>();
 		t1.potentialSharing->reserve(130);
 		findPotentialSharing(t1);
-	}
-	for (int t2id : *t1.potentialSharing)
-	{
-		Trip& t2 = all_trips[t2id];
-		if (t1.group->canAddTrip(t2))
-		{
-			t1.group->addTrip(t2, false);
-		}
-	}
+	}*/
+
 	if (largeCalculations)
 	{
-		delete t1.potentialSharing;
+		for (int hour = t1.hour - 1; hour <= t1.hour + 1; hour++)
+		{
+			if (hour < 0 || hour >= 24)
+				continue;
+			for (int closeOrigin : closePoints[t1.origin])
+			{
+				for (int closeDestination : closePoints[t1.destination])
+				{
+					for (Trip* t2 : sortedTrips(hour, closeOrigin, closeDestination))
+					{
+						if (t1.group->canAddTrip(*t2))
+						{
+							t1.group->addTrip(*t2);
+						}
+					}//for each trip
+				}//for each destination
+			}//for each origin
+		}//for each hour
 	}
+	else
+	{
+		for (int t2id : *t1.potentialSharing)
+		{
+			Trip& t2 = all_trips[t2id];
+			if (t1.group->canAddTrip(t2))
+			{
+				t1.group->addTrip(t2);
+			}
+		}
+	}
+
+	/*
+	if (largeCalculations && t1.potentialSharing != NULL)
+	{
+		delete t1.potentialSharing;
+	}*/
 
 	if (t1.group->trips.size() < 2)
 	{
@@ -964,8 +978,8 @@ void peopleOutput()
 								{
 									delete ti; 
 									cout << ">=" << sharingRequirement << ": " << endl << "Total shared trips: " << totalSharedTrips << "/" << numTripsToShare << endl << "  Trips added: " << totalSharedTrips - prevSharedTrips << endl << "  People added: " << peopleAdded << endl;
-
-									writePeopleFile(sharedPeople);
+									if (WritePersonDetails)
+										writePeopleFile(sharedPeople);
 									return;
 								}
 							}
@@ -1032,7 +1046,8 @@ void timerWrapper()
 		postStatistics();	//DataPoints.txt - shared trip counts, etc.
 
 		//TODO: uncomment these to reenable outputs
-		tripDetailsOutput(); // TripsOutput.txt - each trip's full details, after sharing
+		if (WriteTripDetails)
+			tripDetailsOutput(); // TripsOutput.txt - each trip's full details, after sharing
 
 		if (WriteTripSharing)
 			tripSharingOutput(); //TripSharing.txt - each trip's actual sharing list

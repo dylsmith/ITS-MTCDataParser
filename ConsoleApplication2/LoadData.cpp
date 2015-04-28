@@ -188,9 +188,12 @@ void parseJointTrips()
 	}
 }
 
-vector<Trip*>& sortedTrips(int minute, int origin, int destination)
+
+vector<Trip*>& sortedTrips(int hour, int origin, int destination)
 {
-	return organized[destination - 1][minute * 1455 + (origin - 1)];
+	return organized[(hour * 2117025) + ((origin - 1) * 1455) + (destination - 1)];
+	//return organized[origin * 34920 + destination * 24 + hour];
+	//return organized[destination - 1][(hour) * 1455 + (origin - 1)];
 }
 
 void parseTrips()
@@ -235,7 +238,7 @@ void parseTrips()
 		{
 			if (trip.isShareable())
 			{
-				sortedTrips(trip.minute, trip.origin, trip.destination).push_back(&all_trips[i]);
+				sortedTrips(trip.hour, trip.origin, trip.destination).push_back(&all_trips[i]);
 				//(*organized)[trip.minute][trip.origin][trip.destination].push_back(&all_trips[i]);
 				shareable++;
 			}

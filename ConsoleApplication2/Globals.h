@@ -49,6 +49,7 @@ extern string DEPART_PROBABILITY_FILE;
 extern DepartProbability* departprobs;
 extern string SHARED_PERSON_FILE;
 extern string UNSHARED_PERSON_FILE;
+extern bool WritePersonDetails;
 extern string HOUSEHOLD_EV_FILE;
 
 //Sharing algorithm variables:
@@ -103,7 +104,7 @@ extern Tour* all_joint_tours;
 extern Trip* all_joint_trips;
 extern vector<short>* closePoints;
 extern bool close[1455][1455];
-extern vector<Trip*>* organized[1455];
+extern vector<Trip*>* organized;
 //extern d3* organized;
 extern float* dist;
 extern int shareable;	//Trips that passed the initial checks

@@ -27,7 +27,7 @@ public:
 	bool canAddTrip(Trip& t2);
 
 	//Adds trip to group
-	void addTrip(Trip& t2, bool recheckTour = true);
+	void addTrip(Trip& t2);
 
 	//Removes trip from group
 	void removeTrip(Trip& t1);

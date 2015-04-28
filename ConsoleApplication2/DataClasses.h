@@ -54,7 +54,7 @@ struct Trip
 
 	Trip();
 	bool isShareable();
-	void setDoable(bool set, bool recheckTour);
+	void setDoable(bool set);
 
 	int shareable; //1 = yes, 0 = no, -1 = unknown. potential shareability
 };

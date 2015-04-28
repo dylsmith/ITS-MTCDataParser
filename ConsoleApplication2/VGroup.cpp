@@ -59,13 +59,19 @@ bool VGroup::canAddTrip(Trip& t2)
 }
 //Try to avoid sharing drivers initially
 
-void VGroup::addTrip(Trip& t2, bool recheckTour)
+void VGroup::addTrip(Trip& t2)
 {
 	//Add t2 to the group's trips, set t2 and the leader as doable, delete t2's old group if needed 
 	trips.push_back(&t2);
-	leader->setDoable(true, recheckTour);
-	t2.setDoable(true, recheckTour);
-	if (t2.group) delete t2.group;
+	leader->setDoable(true);
+
+	t2.setDoable(true);
+
+#pragma omp critical
+	if (t2.group)
+		delete t2.group;
+
+#pragma omp critical
 	t2.group = this;
 
 }
@@ -77,7 +83,7 @@ void VGroup::removeTrip(Trip& t1)
 	if (t1.shared)
 	{
 		t1.shared = false;
-		t1.setDoable(false, false);
+		t1.setDoable(false);
 		int size = trips.size();
 		unshared++;
 
@@ -93,7 +99,7 @@ void VGroup::removeTrip(Trip& t1)
 			t1.group = new VGroup(t1);//Form a solo group for t1
 			
 			t2->group = NULL; //And orphan t2
-			t2->setDoable(false, false);
+			t2->setDoable(false);
 		} 
 		else if (size > 2) //if t1 shares with multiple others
 		{
@@ -119,7 +125,7 @@ void VGroup::removeTrip(Trip& t1)
 				{
 					for (Trip* t2 : group->trips)
 					{
-						t2->setDoable(false, false);
+						t2->setDoable(false);
 						t2->group = new VGroup(*t2);
 					}
 					delete group;
