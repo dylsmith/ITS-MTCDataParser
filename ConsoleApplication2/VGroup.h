@@ -16,7 +16,7 @@ class VGroup
 {
 public:
 	Trip* leader;
-	list<Trip*> trips;
+	vector<Trip*> trips;
 
 	//Constructs a group with t as leader
 	VGroup(Trip& t);

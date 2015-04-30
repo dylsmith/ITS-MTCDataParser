@@ -183,7 +183,7 @@ void findPotentialSharing(Trip &t1)
 		{
 			for (int closeDestination : closePoints[t1.destination])
 			{
-				for (Trip* t2 : sortedTrips(hour, closeOrigin, closeDestination))
+				for (Trip* t2 : *sortedTrips(hour, closeOrigin, closeDestination))
 				{
 					if (compareTrips(t1, *t2))
 					{			
@@ -238,7 +238,7 @@ void formGroup(Trip& t1)	//Returns true if at least one other trip is added. Wil
 				{
 					for (int closeDestination : closePoints[t1.destination])
 					{
-						for (Trip* t2 : sortedTrips(hour, closeOrigin, closeDestination))
+						for (Trip* t2 : *sortedTrips(hour, closeOrigin, closeDestination))
 						{
 							if (t1.group->canAddTrip(*t2))
 							{
@@ -310,7 +310,7 @@ void shareTrips()
 	time_t end;
 	//Try to form a group for all trips
 	int done = 0;
-	int step = 50000;
+	int step = 100000;
 	int count = 0;
 	//#pragma omp parallel for firstprivate(count)
 	for (int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
@@ -431,7 +431,7 @@ void shareTrips2()
 						{
 							for (int closeDestination : closePoints[t1.destination])
 							{
-								for (Trip* t2 : sortedTrips(hour, closeOrigin, closeDestination))
+								for (Trip* t2 : *sortedTrips(hour, closeOrigin, closeDestination))
 								{
 									if (t2->group && t2->group->canAddTrip(t1)) //if t2 has a group and can accept t1
 									{
@@ -840,7 +840,7 @@ void tryToGroup(Trip& t1)
 			{
 				for (int closeDestination : closePoints[t1.destination])
 				{
-					for (Trip* t2 : sortedTrips(hour, closeOrigin, closeDestination))
+					for (Trip* t2 : *sortedTrips(hour, closeOrigin, closeDestination))
 					{
 						if (t1.group->canAddTrip(*t2))
 						{

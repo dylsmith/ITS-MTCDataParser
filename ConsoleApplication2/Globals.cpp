@@ -59,7 +59,7 @@ int DoableTripModes[] = { 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 
 
 //Trip sharing requirements:  (ordered by computational complexity)
 
-double CLOSE_DISTANCE = 1;//10	//Two points must be within this to be considered closePoints. Make sure to update vector reserve() calls when changing this
+double CLOSE_DISTANCE = 2;//10	//Two points must be within this to be considered closePoints. Make sure to update vector reserve() calls when changing this
 int MaxNumStops = 6;	//Number of stops must be less than or equal to this
 int MaxIncome = 1000000; //Income must be below this
 float MinDistanceTraveled = 5;	//Distance between origin and dest. must be above this

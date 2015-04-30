@@ -13,7 +13,7 @@ void parsePeople();
 void parseJointTours();
 void parseTours();
 void parseJointTrips();
-vector<Trip*>& sortedTrips(int minute, int origin, int destination);
+vector<Trip*>* sortedTrips(int minute, int origin, int destination);
 void parseTrips();
 
 #endif

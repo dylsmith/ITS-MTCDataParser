@@ -20,7 +20,7 @@ VGroup::~VGroup()
 
 bool VGroup::canAddTrip(Trip& t2)
 {
-	if ((t2.group && t2.group->trips.size() > 1) || !t2.shared || all_people[t2.perid].totalScore < sharingRequirement)	//If trip is already sharing with others
+	if (!t2.shared || (t2.group && t2.group->trips.size() > 1) || all_people[t2.perid].totalScore < sharingRequirement)	//If trip is already sharing with others
 		return false;
 
 	if (Maximize)
@@ -138,8 +138,8 @@ void VGroup::removeTrip(Trip& t1)
 //Search through the vrgoup, find t, remove it
 void VGroup::removeFromTrips(Trip& t)
 {
-	list<Trip*>::iterator it = trips.begin();
+	vector<Trip*>::iterator it = trips.begin();
 	while (*it != &t)
 		it++;
-	trips.erase(it);
+	it = trips.erase(it);
 }
