@@ -51,7 +51,7 @@ void parseClosePoints()
 	cout << "Each point is close to " << closec / NUM_LOCATIONS << " other points, on average." << endl;
 }
 
-void parseHouseholds()
+ void parseHouseholds()
 {
 	QuickParser q(HOUSEHOLD_FILE);
 	Timer timeit("Parsing households");
@@ -59,17 +59,36 @@ void parseHouseholds()
 	for (int i = 0; i < HOUSEHOLD_FILE_SIZE; i++)
 	{
 		q.parseNewLine();
+		int hhid = q.parseInt();	all_households[hhid].hhid = hhid;	Household& hh = all_households[hhid];
+		q.parseComma();
+		q.parseComma();
+		q.parseComma();
+		hh.income = q.parseInt();
+		q.parseComma();
+		hh.type = q.parseInt();
+		q.parseComma();
+		q.parseComma();
+		q.parseComma();
+		q.parseComma();
+		hh.autos = q.parseInt();
 
-		int hhid = q.parseInt();
-		q.parseComma();
-		q.parseComma();
-		q.parseComma();
-		//if (hhid >= HOUSEHOLD_FILE_SIZE)
-		//	cout << hhid << " " << HOUSEHOLD_FILE_SIZE << endl;
-		all_households[hhid].autos = q.parseInt();
 
-		all_households[hhid].hhid = hhid;
+		if (hh.income < householdIncome && hh.autos < householdVehiclesMax && viableHouseholdTypes[hh.type])
+		{
+			householdIncome += hh.income;
+			householdVehicles += hh.autos;
+			householdType += hh.type;
+		}
+		else
+		{
+			hh.viable = false;
+		}
+
+
 	}
+	householdIncome /= HOUSEHOLD_FILE_SIZE;
+	householdVehicles /= HOUSEHOLD_FILE_SIZE;
+	householdType /= HOUSEHOLD_FILE_SIZE;
 }
 
 void parsePeople()
@@ -83,25 +102,27 @@ void parsePeople()
 		q.parseNewLine();
 
 		int hhid  = q.parseInt();
-		int perid = q.parseInt();
+		int perid = q.parseInt(); Person& p = all_people[perid]; p.id = perid; p.hhid = hhid;
+		p.age = q.parseInt();
+		q.parseComma();
+		p.esr = q.parseInt();
 		q.parseComma();
 		q.parseComma();
 		q.parseComma();
 		q.parseComma();
+		p.sex = q.parseInt();
+		q.parseComma();
+		q.parseComma();
+		p.msp = q.parseInt();
+		q.parseComma();
+		p.income = q.parseInt();
 		q.parseComma();
 		q.parseComma();
 		q.parseComma();
-		q.parseComma();
-		q.parseComma();
-		q.parseComma();
-		q.parseComma();
-		q.parseComma();
-		all_people[perid].income = q.parseInt();
+		p.ptype = q.parseInt();
 
-		all_people[perid].id = perid;
-		all_people[perid].hhid = hhid;
 
-		all_households[hhid].people.push_back(&all_people[perid]);
+		all_households[hhid].people.push_back(&p);
 	}
 }
 
@@ -183,7 +204,8 @@ void parseJointTrips()
 		q.parseComma();
 		t.mode = q.parseInt();
 
-		all_households[hhid].tours[t.tourid]->trips.push_back(&t);
+		if (all_households[hhid].viable)
+			all_households[hhid].tours[t.tourid]->trips.push_back(&t);
 
 	}
 }
@@ -205,7 +227,7 @@ void parseTrips()
 
 		q.parseNewLine();
 
-		q.parseComma();
+		int hhid = q.parseInt(); 
 		trip.perid = q.parseInt();
 		q.parseComma();
 		trip.tourid = q.parseInt();
@@ -232,14 +254,11 @@ void parseTrips()
 		if (DoableTripModes[trip.mode])
 			trip.doable = true;
 
-		if (ExecutionMode == 0)
+		if (ExecutionMode == 0 && trip.isShareable() && all_households[hhid].viable)
 		{
-			if (trip.isShareable())
-			{
-				sortedTrips(trip.hour, trip.origin, trip.destination)->push_back(&all_trips[i]);
-				//(*organized)[trip.minute][trip.origin][trip.destination].push_back(&all_trips[i]);
-				shareable++;
-			}
+			sortedTrips(trip.hour, trip.origin, trip.destination)->push_back(&all_trips[i]);
+			//(*organized)[trip.minute][trip.origin][trip.destination].push_back(&all_trips[i]);
+			shareable++;
 		}
 
 		all_people[trip.perid].tours[trip.tourid]->trips.push_back(&all_trips[i]);

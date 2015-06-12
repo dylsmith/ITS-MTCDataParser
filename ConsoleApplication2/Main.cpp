@@ -14,7 +14,11 @@
 #include <iomanip>
 #include <unordered_set>
 #include <sstream>
+#include <thread>
+#include <mutex>
 #include "omp.h"
+#include "DeadlockLock.h"
+#include "DeadlockLock.cpp"
 
 using namespace std;
 
@@ -111,13 +115,12 @@ void EVCheck()
 
 	int total = 0;
 	for (int i = 1; i <= HOUSEHOLD_FILE_SIZE; i++) //Sum up total households vs viable households
-	{											//TODO: Add a new column to household file: viable
+	{											
 		Household& hh = all_households[i];
 		if (hh.viable)
 			++viableHouseholds;
 	}
 
-	//TODO: print these results
 
 	vector<string> householdFile;
 	householdFile.reserve(HOUSEHOLD_FILE_SIZE+1);
@@ -208,15 +211,22 @@ void analyzeTrips()
 	int count = 0;
 	for (int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
 	{
-		if (t1id % mod == 0) cout << ++count;
+		if (t1id % mod == 0) cout << ++count << endl;
 		findPotentialSharing(all_trips[t1id]);
 	}
 }
 
 //Tries to form a new group around a trip
-void formGroup(Trip& t1)	//Returns true if at least one other trip is added. Will always create t1.actualSharing of some size >= 1
+void formGroup(Trip& t1, int tid = -1)	//Returns true if at least one other trip is added. Will always create t1.actualSharing of some size >= 1
 {
 	//If tour doesn't have a group yet and is a driver
+	if (parallel)
+	{
+		t1.lock.beingChecked = true;
+		t1.lock.waitLock(tid);
+		//t1.lock.lock();
+	}
+
 	if (DrivingModes[t1.mode] && t1.group == NULL && all_people[t1.perid].totalScore >= sharingRequirement)
 	{
 		t1.group = new VGroup(t1); //Give it a group, and add any potentially shared trips that can share with its group
@@ -240,10 +250,32 @@ void formGroup(Trip& t1)	//Returns true if at least one other trip is added. Wil
 					{
 						for (Trip* t2 : *sortedTrips(hour, closeOrigin, closeDestination))
 						{
-							if (t1.group->canAddTrip(*t2))
+							if (parallel)
 							{
-								t1.group->addTrip(*t2);
+								t1.lock.immediateLock(t2);
+								/*
+								while (!t2->lock.try_lock())
+								{
+									if (t1.demandUnlock)
+									{
+										t1.lock.unlock();
+										this_thread::sleep_for(chrono::seconds(1));
+										while(!t1.lock.try_lock());
+									}
+									t2->demandUnlock = true;
+
+								}
+								t2->demandUnlock = false;*/
+								//t2->lock.lock();
 							}
+							{
+								if (t1.group->canAddTrip(*t2))
+								{
+									t1.group->addTrip(*t2);
+								}
+							}
+							if (parallel)
+								t2->lock.unlock(tid);
 						}//for each trip
 					}//for each destination
 				}//for each origin
@@ -254,10 +286,15 @@ void formGroup(Trip& t1)	//Returns true if at least one other trip is added. Wil
 			for (int t2id : *t1.potentialSharing)
 			{
 				Trip& t2 = all_trips[t2id];
+				if (parallel)
+					t1.lock.immediateLock(&t2);
+				//while (!t2.lock.try_lock());
 				if (t1.group->canAddTrip(t2))
 				{
 					t1.group->addTrip(t2);
 				}
+				if (parallel)
+					t2.lock.unlock(tid);
 			}
 		}
 
@@ -266,6 +303,13 @@ void formGroup(Trip& t1)	//Returns true if at least one other trip is added. Wil
 		{
 			delete t1.potentialSharing;
 		}*/
+	}
+
+	if (parallel)
+	{
+
+		t1.lock.beingChecked = false;
+		t1.lock.unlock(tid);
 	}
 }
 
@@ -302,59 +346,71 @@ void checkTour(Tour& to)
 	}
 }
 
-//Tries to form actual sharing groups for drivers
-void shareTrips()
+int parallelShareTripsDone = 0;
+mutex shareTripsCounter;
+const int numThreads = 10;
+void shareTripsThread(int tid)
 {
-	Timer ti("Sharing trips");
-	time_t start = time(0);
-	time_t end;
-	//Try to form a group for all trips
-	int done = 0;
-	int step = 100000;
 	int count = 0;
-	//#pragma omp parallel for firstprivate(count)
-	for (int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
+	int step = 100000;
+	for (int t1id = tid; t1id < TRIP_FILE_SIZE; t1id += numThreads)
 	{
 		if (++count == step)
 		{
 			count = 0;
-			//#pragma omp atomic
-			done += step;
-
-			time_t end = time(0);
-			int tg = end - start;
-			if (tg < 1) tg = 1;
-			int secondsleft = (TRIP_FILE_SIZE - t1id) / (done / tg);
-			int minutesleft = secondsleft / 60;
-			secondsleft %= 60;
-
-			cout << done << "/" << TRIP_FILE_SIZE << "  " << minutesleft << " minutes " << secondsleft << " seconds left." << endl;
+			shareTripsCounter.lock();
+			parallelShareTripsDone += step;
+			shareTripsCounter.unlock();
+			cout << parallelShareTripsDone << "/" << TRIP_FILE_SIZE << " thread id: " << tid << endl;
 		}
-		/*
-		if (t1id % step == 0)
-		{
-			//cout << t1id << "/" << TRIP_FILE_SIZE << endl;
-			cout << tod() << t1id << "/" << TRIP_FILE_SIZE << endl;
-			
-			end = time(0);
-			int timepassed = end - start;
-			start = time(0);
-			int trips_left = TRIP_FILE_SIZE - t1id;
-			if (timepassed == 0)
-				timepassed = 1;
-			int secondsleft = trips_left / ((double)step / timepassed);
-			int minutesleft = secondsleft / 60;
-			secondsleft %= 60;
-			cout << minutesleft << " minutes " << secondsleft << " seconds left." << endl;
-		}*/
-		Trip& t = all_trips[t1id];
-		formGroup(t);
-		/*
-		#pragma omp atomic
-		++done;
-		if (done % step == 0)
-			cout << done << "/" << TRIP_FILE_SIZE << endl;*/
+		formGroup(all_trips[t1id], tid);
+	}
+}
 
+
+//Tries to form actual sharing groups for drivers
+void shareTrips()
+{
+	Timer ti("Sharing trips");
+
+	if (parallel)
+	{
+		thread t[numThreads];
+		for (int i = 0; i < numThreads; i++)
+			t[i] = thread(shareTripsThread, i);
+
+		for (int i = 0; i < numThreads; i++)
+			t[i].join();
+	}
+
+	else
+	{
+		time_t start = time(0);
+		time_t end;
+		//Try to form a group for all trips
+		int done = 0;
+		int step = 100000;
+		int count = 0;
+
+		//#pragma omp parallel for firstprivate(count)
+		for (int t1id = 0; t1id < TRIP_FILE_SIZE; t1id++)
+		{
+			if (++count == step)
+			{
+				count = 0;
+				done += step;
+
+				time_t end = time(0);
+				int tg = end - start;
+				if (tg < 1) tg = 1;
+				int secondsleft = (TRIP_FILE_SIZE - t1id) / (done / tg);
+				int minutesleft = secondsleft / 60;
+				secondsleft %= 60;
+
+				cout << done << "/" << TRIP_FILE_SIZE << "  " << minutesleft << " minutes " << secondsleft << " seconds left." << endl;
+			}
+			formGroup(all_trips[t1id]);
+		}
 	}
 	
 #pragma omp parallel for reduction(+:sharingBeforeTourLevel)
@@ -571,6 +627,9 @@ void postStatistics()
 		outf << "Maximizing group size" << endl;
 	else
 		outf << "Minimizing group size" << endl;
+
+	outf << "Average household income: " << householdIncome << endl;
+	outf << "Average household # vehicles: " << householdVehicles << endl;
 
 	outf << "Total trips: " << TRIP_FILE_SIZE << endl;
 	
@@ -1009,7 +1068,7 @@ void peopleOutput()
 }
 
 
-
+#include "Test.h"
 //Records total execution time
 void timerWrapper()
 {
@@ -1045,7 +1104,6 @@ void timerWrapper()
 		countMiles();
 		postStatistics();	//DataPoints.txt - shared trip counts, etc.
 
-		//TODO: uncomment these to reenable outputs
 		if (WriteTripDetails)
 			tripDetailsOutput(); // TripsOutput.txt - each trip's full details, after sharing
 
@@ -1070,6 +1128,33 @@ void timerWrapper()
 		outf << "EV Algorithm viable households: " << viableHouseholds << "/" << HOUSEHOLD_FILE_SIZE 
 			 << " households were viable, or " << setprecision(5) << (double)viableHouseholds / HOUSEHOLD_FILE_SIZE * 100 << "%." << endl;
 	}
+	else if (ExecutionMode == 2) //If test
+	{
+		reserveSpace();
+
+		departprobs = new DepartProbability();
+		parseClosePoints();
+		parseHouseholds();
+		parsePeople();
+		parseTours();
+		parseJointTours();
+		parseTrips();
+		parseJointTrips();
+		analyzeTrips(); // don't order by sharing probability
+
+		testShare();
+		//checkTours();
+		//testShare();
+
+		countMiles();
+		postStatistics();	//DataPoints.txt - shared trip counts, etc.
+
+		if (WriteTripDetails)
+			tripDetailsOutput(); // TripsOutput.txt - each trip's full details, after sharing
+
+		if (WriteTripSharing)
+			tripSharingOutput(); //TripSharing.txt - each trip's actual sharing list
+	}
 }
 
 //Main
@@ -1079,6 +1164,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	
 	cout << "Finished." << endl;
 	pause();
+
 	return 0;
 }
 

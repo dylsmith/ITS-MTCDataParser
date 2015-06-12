@@ -126,6 +126,8 @@ Trip::Trip()
 	shareable = -1;
 	shared = 1;
 	doable = false;
+
+	//lock = unique_lock<mutex>(mtx, defer_lock);
 }
 
 //Returns true if trip passes initial parameter checks

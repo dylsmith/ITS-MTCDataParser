@@ -6,10 +6,12 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <mutex>
 #include "MiscFunctions.h"
 
 using namespace std;
 
+extern bool parallel;
 extern int ExecutionMode; //0 = ridesharing, 1 = EV
 extern bool largeCalculations; //If true, will determine trip sharing on-the-fly rather than saving sharing sets in memory
 
@@ -72,6 +74,11 @@ extern int TripModes[]; //1 represents that array index is shareable. Right now,
 extern unsigned int RandomFailChance; //%chance a trip will randomly not be shareable. This should be an integer from 0-100 
 extern set<string> TripPurposes; //Simply list acceptable purposes here
 
+//Household
+extern double householdIncomeMax;
+extern int viableHouseholdTypes[];
+extern int householdVehiclesMax;
+
 //Count the number of files automatically
 extern double CLOSE_DISTANCE;	//Two points must be within this to be considered closePoints. Make sure to update vector reserve() calls when changing this
 extern int NUM_LOCATIONS;		//Number of locations in the simulation
@@ -118,10 +125,15 @@ extern int solo;//Trips that could not be actually shared (but weren't unshared)
 extern int orphaned;//Trips that were sharing with a trip that was unshared, and now are not sharing
 extern double VMTReduction; //Vehicle miles saved
 
+extern double householdIncome; //Average household income
+extern double householdType; //?? TODO: What is this
+extern double householdVehicles; //Average household vehicles
+
 extern bool sortPotentialSharing; 
 extern double sharingRequirementStep;
 extern double sharingRequirement;
 
 extern int g_seed;
+extern mutex ConflictResolutionLock;
 
 #endif

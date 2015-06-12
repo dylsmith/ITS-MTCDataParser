@@ -6,11 +6,13 @@
 #include "VGroup.h"
 #include "QuickParser.h"
 #include "FastRand.h"
+#include "DeadlockLock.h"
 
 #include <map>
 #include <vector>
 #include <list>
 #include <iostream>
+#include <mutex>
 using namespace std;
 
 struct DepartProbability
@@ -55,6 +57,8 @@ struct Trip
 	Trip();
 	bool isShareable();
 	void setDoable(bool set);
+	//mutex mtx;
+	DeadlockLock lock;
 
 	int shareable; //1 = yes, 0 = no, -1 = unknown. potential shareability
 };
@@ -79,6 +83,11 @@ struct Person
 	int id;
 	int income;
 	int hhid;
+	int age;
+	int esr;
+	int sex;
+	int msp;
+	int ptype;
 
 	double milesDriven;
 
@@ -96,6 +105,8 @@ struct Household
 {
 	int hhid;
 	int autos;
+	int type;
+	int income;
 	double jointMilesDriven;
 	double indivMilesDriven;
 	vector<Person*> people;
