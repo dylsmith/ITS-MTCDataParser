@@ -678,10 +678,29 @@ void timerWrapper()
 	}
 }
 
+struct PersonCompare
+{
+	inline bool operator()(const Person* p1, const Person* p2)
+	{
+		return p1->income < p2->income;
+	}
+};
+#include <algorithm>
+
+vector<Person*> sortPeople()
+{
+	Timer t("Sorting people list by ride-sharing probability");
+	vector<Person*> people;
+	for (int i = 0; i < PERSON_FILE_SIZE; i++)
+	{
+		people.push_back(&all_people[i]);
+	}
+
+	sort(people.begin(), people.end(), PersonCompare());
+}
 //Main
 int _tmain(int argc, _TCHAR* argv[])
 {
-	
 	timerWrapper();
 	
 	cout << "Finished." << endl;
@@ -689,9 +708,4 @@ int _tmain(int argc, _TCHAR* argv[])
 	return 0;
 }
 
-
-/*
-print each person and their probability data
-
-*/
 

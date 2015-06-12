@@ -25,9 +25,11 @@ int viableHouseholds = 0;
 double EVAverageRange = 50; //100 -> 92.9% //EV range
 int EVTripModes[] = { 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; //Identical to drivingmodes right now
 string JOINT_TOURS_FILE = "D:\\MTC_BASE\\main\\jointTourData_4.csv";
-int JOINT_TOURS_FILE_SIZE = lineCount(JOINT_TOURS_FILE) - 1;
+//int JOINT_TOURS_FILE_SIZE = lineCount(JOINT_TOURS_FILE) - 1;
+int JOINT_TOURS_FILE_SIZE =1;
 string JOINT_TRIPS_FILE = "D:\\MTC_BASE\\main\\jointTripData_4.csv";
-int JOINT_TRIPS_FILE_SIZE = lineCount(JOINT_TRIPS_FILE) - 1;
+//int JOINT_TRIPS_FILE_SIZE = lineCount(JOINT_TRIPS_FILE) - 1;
+int JOINT_TRIPS_FILE_SIZE = 1;
 string DEPART_PROBABILITY_FILE = "C:\\ITS\\ProbabilityLookup.txt"; // Shuld be the same for entire scenario run (calibrating based on the spatial-temporal distribution of the survey data)
 DepartProbability* departprobs;
 
@@ -72,10 +74,18 @@ string TRIP_FILE = "D:\\MTC_BASE\\main\\indivTripData_4.csv";
 int NUM_LOCATIONS = 1454;		//Number of locations in the simulation
 int DISTANCE_FILE_SIZE = NUM_LOCATIONS * NUM_LOCATIONS;
 
+/* TODO: Revert this
 int HOUSEHOLD_FILE_SIZE = lineCount(HOUSEHOLD_FILE) - 1; //TODO: record this number
 int PERSON_FILE_SIZE = lineCount(PERSON_FILE) - 1;//7053334
 int TOUR_FILE_SIZE = lineCount(TOUR_FILE) - 1;//8914778
 int TRIP_FILE_SIZE = lineCount(TRIP_FILE) - 1;//22811684
+*/
+
+int HOUSEHOLD_FILE_SIZE = 1; //TODO: record this number
+int PERSON_FILE_SIZE = 7053334;//7053334
+int TOUR_FILE_SIZE = 1;//8914778
+int TRIP_FILE_SIZE =  1;//22811684
+
 /*
 int PERSON_FILE_SIZE = 7053334;
 int TOUR_FILE_SIZE = 8914778;
