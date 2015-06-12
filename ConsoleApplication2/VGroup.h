@@ -11,20 +11,23 @@
 using namespace std;
 
 struct Trip;
+
 class VGroup
 {
 public:
 	Trip* leader;
-	list<Trip*> trips;
+	vector<Trip*> trips;
 
 	//Constructs a group with t as leader
 	VGroup(Trip& t);
+
+	~VGroup();
 
 	//If t2 can share with all elements in the group
 	bool canAddTrip(Trip& t2);
 
 	//Adds trip to group
-	void addTrip(Trip& t2, bool recheckTour = true);
+	void addTrip(Trip& t2);
 
 	//Removes trip from group
 	void removeTrip(Trip& t1);

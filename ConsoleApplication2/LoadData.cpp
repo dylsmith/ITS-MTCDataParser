@@ -8,9 +8,10 @@
 #include "MiscFunctions.h"
 #include "FastRand.h"
 
+#include <omp.h>
+
 using namespace std;
 
-double distanceBetween(int origin, int destination);
 
 void parseDistances()
 {
@@ -33,24 +34,24 @@ void parseClosePoints()
 	parseDistances();
 
 	//Check non-diagonal points where k > i. Graph is symmetric, so we don't need to check k < i
+	int closec = 0;
 	for (int i = 1; i <= NUM_LOCATIONS; i++)
 	{
-		closePoints[i].push_back(i);
-		for (int k = i + 1; k <= NUM_LOCATIONS; k++)
+		for (int k = 1; k <= NUM_LOCATIONS; k++)
 		{
 
 			if (distanceBetween(i, k) < CLOSE_DISTANCE)
 			{
+				++closec;
 				closePoints[i].push_back(k);
-				closePoints[k].push_back(i);
 				close[i][k] = 1;
-				close[k][i] = 1;
 			}
 		}
 	}
+	cout << "Each point is close to " << closec / NUM_LOCATIONS << " other points, on average." << endl;
 }
 
-void parseHouseholds()
+ void parseHouseholds()
 {
 	QuickParser q(HOUSEHOLD_FILE);
 	Timer timeit("Parsing households");
@@ -58,15 +59,36 @@ void parseHouseholds()
 	for (int i = 0; i < HOUSEHOLD_FILE_SIZE; i++)
 	{
 		q.parseNewLine();
+		int hhid = q.parseInt();	all_households[hhid].hhid = hhid;	Household& hh = all_households[hhid];
+		q.parseComma();
+		q.parseComma();
+		q.parseComma();
+		hh.income = q.parseInt();
+		q.parseComma();
+		hh.type = q.parseInt();
+		q.parseComma();
+		q.parseComma();
+		q.parseComma();
+		q.parseComma();
+		hh.autos = q.parseInt();
 
-		int hhid = q.parseInt();
-		q.parseComma();
-		q.parseComma();
-		q.parseComma();
-		all_households[hhid].autos = q.parseInt();
 
-		all_households[hhid].hhid = hhid;
+		if (hh.income < householdIncome && hh.autos < householdVehiclesMax && viableHouseholdTypes[hh.type])
+		{
+			householdIncome += hh.income;
+			householdVehicles += hh.autos;
+			householdType += hh.type;
+		}
+		else
+		{
+			hh.viable = false;
+		}
+
+
 	}
+	householdIncome /= HOUSEHOLD_FILE_SIZE;
+	householdVehicles /= HOUSEHOLD_FILE_SIZE;
+	householdType /= HOUSEHOLD_FILE_SIZE;
 }
 
 void parsePeople()
@@ -80,25 +102,27 @@ void parsePeople()
 		q.parseNewLine();
 
 		int hhid  = q.parseInt();
-		int perid = q.parseInt();
+		int perid = q.parseInt(); Person& p = all_people[perid]; p.id = perid; p.hhid = hhid;
+		p.age = q.parseInt();
+		q.parseComma();
+		p.esr = q.parseInt();
 		q.parseComma();
 		q.parseComma();
 		q.parseComma();
 		q.parseComma();
+		p.sex = q.parseInt();
+		q.parseComma();
+		q.parseComma();
+		p.msp = q.parseInt();
+		q.parseComma();
+		p.income = q.parseInt();
 		q.parseComma();
 		q.parseComma();
 		q.parseComma();
-		q.parseComma();
-		q.parseComma();
-		q.parseComma();
-		q.parseComma();
-		q.parseComma();
-		all_people[perid].income = q.parseInt();
+		p.ptype = q.parseInt();
 
-		all_people[perid].id = perid;
-		all_people[perid].hhid = hhid;
 
-		all_households[hhid].people.push_back(&all_people[perid]);
+		all_households[hhid].people.push_back(&p);
 	}
 }
 
@@ -157,7 +181,7 @@ void parseTours()
 void parseJointTrips()
 {
 	QuickParser q(JOINT_TRIPS_FILE);
-	Timer timeit("Paring joint trips");
+	Timer timeit("Parsing joint trips");
 
 	for (int i = 0; i < JOINT_TRIPS_FILE_SIZE; i++)
 	{
@@ -180,9 +204,16 @@ void parseJointTrips()
 		q.parseComma();
 		t.mode = q.parseInt();
 
-		all_households[hhid].tours[t.tourid]->trips.push_back(&t);
+		if (all_households[hhid].viable)
+			all_households[hhid].tours[t.tourid]->trips.push_back(&t);
 
 	}
+}
+
+
+vector<Trip*>* sortedTrips(int hour, int origin, int destination)
+{
+	return &organized[(hour * 2117025) + ((origin - 1) * 1455) + (destination - 1)];
 }
 
 void parseTrips()
@@ -190,23 +221,13 @@ void parseTrips()
 	QuickParser q(TRIP_FILE);
 	Timer timeit("Parsing trips");
 
-	/*
-	for (int i = 5; i < 24; i++)
-	{
-		for (int k = 1; k <= NUM_LOCATIONS; k++)
-		{
-			organized[i][k] = new vector<Trip*>[NUM_LOCATIONS + 1];
-			organized[i][k]->reserve(120);
-		}
-	}*/
-
 	for (int i = 0; i < TRIP_FILE_SIZE; i++)
 	{
 		Trip& trip = all_trips[i];
 
 		q.parseNewLine();
 
-		q.parseComma();
+		int hhid = q.parseInt(); 
 		trip.perid = q.parseInt();
 		q.parseComma();
 		trip.tourid = q.parseInt();
@@ -222,20 +243,22 @@ void parseTrips()
 		q.parseComma();
 		trip.hour = q.parseInt();
 		trip.mode = q.parseInt();
-		all_trips[i].id = i;
+		q.parseComma();
+		trip.category = q.parseString();
+		trip.id = i;
+
+		trip.mandatory = (trip.category == "MANDATORY");
 
 		trip.minute = (trip.hour * 60) + (departprobs->generate(trip.origin, trip.hour));
 
 		if (DoableTripModes[trip.mode])
 			trip.doable = true;
 
-		if (ExecutionMode == 0)
+		if (ExecutionMode == 0 && trip.isShareable() && all_households[hhid].viable)
 		{
-			if (trip.isShareable())
-			{
-				(*organized)[trip.hour][trip.origin][trip.destination].push_back(&all_trips[i]);
-				shareable++;
-			}
+			sortedTrips(trip.hour, trip.origin, trip.destination)->push_back(&all_trips[i]);
+			//(*organized)[trip.minute][trip.origin][trip.destination].push_back(&all_trips[i]);
+			shareable++;
 		}
 
 		all_people[trip.perid].tours[trip.tourid]->trips.push_back(&all_trips[i]);

@@ -6,12 +6,22 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <mutex>
 #include "MiscFunctions.h"
 
 using namespace std;
 
+extern bool parallel;
 extern int ExecutionMode; //0 = ridesharing, 1 = EV
-extern int g_seed;
+extern bool largeCalculations; //If true, will determine trip sharing on-the-fly rather than saving sharing sets in memory
+
+extern double rideShareWeight;
+extern double householdInteractionWeight;
+
+extern double mandatoryTripWeight;
+extern double nonMandatoryTripWeight;
+extern double TripsToShare;
+
 
 struct Trip; struct DepartProbability;
 typedef vector<Trip*> d0;
@@ -19,6 +29,7 @@ typedef vector<d0> d1;
 typedef vector<d1> d2;
 typedef vector<d2> d3;
 
+extern string PERSON_DETAILS_FILE;
 extern string ALL_TRIP_DETAILS_FILE;
 extern string DATA_FILE;
 extern string TRIP_DETAILS_FILE;
@@ -38,6 +49,10 @@ extern string JOINT_TRIPS_FILE;
 extern int JOINT_TRIPS_FILE_SIZE;
 extern string DEPART_PROBABILITY_FILE;
 extern DepartProbability* departprobs;
+extern string SHARED_PERSON_FILE;
+extern string UNSHARED_PERSON_FILE;
+extern bool WritePersonDetails;
+extern string HOUSEHOLD_EV_FILE;
 
 //Sharing algorithm variables:
 extern bool Maximize;
@@ -58,6 +73,11 @@ extern float MinDistanceTraveled;	//Distance between origin and dest. must be ab
 extern int TripModes[]; //1 represents that array index is shareable. Right now, indexes modes 1-7 (and not 0) are shareable
 extern unsigned int RandomFailChance; //%chance a trip will randomly not be shareable. This should be an integer from 0-100 
 extern set<string> TripPurposes; //Simply list acceptable purposes here
+
+//Household
+extern double householdIncomeMax;
+extern int viableHouseholdTypes[];
+extern int householdVehiclesMax;
 
 //Count the number of files automatically
 extern double CLOSE_DISTANCE;	//Two points must be within this to be considered closePoints. Make sure to update vector reserve() calls when changing this
@@ -83,6 +103,7 @@ struct Tour; struct Trip; struct Person; struct Household;
 
 //Data allocation:
 extern Household* all_households;
+//extern vector<Person*> all_people;
 extern Person* all_people;
 extern Tour* all_tours;
 extern Trip* all_trips;
@@ -90,7 +111,8 @@ extern Tour* all_joint_tours;
 extern Trip* all_joint_trips;
 extern vector<short>* closePoints;
 extern bool close[1455][1455];
-extern d3* organized;
+extern vector<Trip*>* organized;
+//extern d3* organized;
 extern float* dist;
 extern int shareable;	//Trips that passed the initial checks
 extern int potentialSharing;//Trips with at least one trip it could potentially share with	
@@ -103,5 +125,15 @@ extern int solo;//Trips that could not be actually shared (but weren't unshared)
 extern int orphaned;//Trips that were sharing with a trip that was unshared, and now are not sharing
 extern double VMTReduction; //Vehicle miles saved
 
+extern double householdIncome; //Average household income
+extern double householdType; //?? TODO: What is this
+extern double householdVehicles; //Average household vehicles
+
+extern bool sortPotentialSharing; 
+extern double sharingRequirementStep;
+extern double sharingRequirement;
+
+extern int g_seed;
+extern mutex ConflictResolutionLock;
 
 #endif

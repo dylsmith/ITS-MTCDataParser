@@ -12,7 +12,6 @@
 #include <fstream>
 using namespace std;
 
-void reCheckTour(Tour& to);
 void checkTour(Tour& to);
 
 //Generate a random minute offset, based on observed departure quartiles
@@ -118,10 +117,17 @@ DepartProbability::DepartProbability()
 Trip::Trip()
 {
 	group = NULL;
-	potentialSharing.reserve(4);
+	if (!largeCalculations)
+	{
+		potentialSharing = new vector<int>();
+		potentialSharing->reserve(20);
+
+	}
 	shareable = -1;
 	shared = 1;
 	doable = false;
+
+	//lock = unique_lock<mutex>(mtx, defer_lock);
 }
 
 //Returns true if trip passes initial parameter checks
@@ -137,32 +143,24 @@ bool Trip::isShareable()
 		((fastrand() % 100) + 1) > RandomFailChance &&					//Random chance (random int must be greater than fail chance)
 		TripPurposes.find(purpose) != TripPurposes.end()				//Trip purpose (purpose must be in the set of allowed purposes)
 		);
-	return shareable;
+	return shareable == 1;
 
 }
 
 //Sets a trip to be doable or not, recursively following any additions/subtractions
-void Trip::setDoable(bool set, bool recheckTour)
+void Trip::setDoable(bool set)
 {
-
-	if (set == true && doable == false) //if we're making the trip doable
+	#pragma omp critical
 	{
-		doable = true;
-		if (recheckTour)
+		if (set == true) //if we're making the trip doable
 		{
-			Tour& to = *all_people[perid].tours[tourid];
-			reCheckTour(to);
+			doable = true;
 		}
-	}
-	else if (set == false && doable == true)//if we're making the trip not doable
-	{
-		if (!DoableTripModes[mode])
+		else//if we're making the trip not doable
 		{
-			doable = false;
-			if (recheckTour)
+			if (!DoableTripModes[mode])
 			{
-				Tour& to = *all_people[perid].tours[tourid];
-				checkTour(to);
+				doable = false;
 			}
 		}
 	}
@@ -177,6 +175,9 @@ Tour::Tour()
 Person::Person()
 {
 	milesDriven = 0;
+	double rideShareProb = -97;
+	double householdInteractionProb = -98;
+	double totalScore = -99;
 }
 
 Household::Household()
