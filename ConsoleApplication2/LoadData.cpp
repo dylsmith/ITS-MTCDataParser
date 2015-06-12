@@ -121,6 +121,8 @@ void parsePeople()
 		q.parseComma();
 		p.ptype = q.parseInt();
 
+		if (p.age < maxAge && validESR[p.esr] && validSex[p.sex] && validMSP[p.msp] && validPTYPE[p.ptype])
+			p.viable = true;
 
 		all_households[hhid].people.push_back(&p);
 	}
@@ -254,7 +256,7 @@ void parseTrips()
 		if (DoableTripModes[trip.mode])
 			trip.doable = true;
 
-		if (ExecutionMode == 0 && trip.isShareable() && all_households[hhid].viable)
+		if (ExecutionMode == 0 && trip.isShareable() && all_households[hhid].viable && all_people[trip.perid].viable)
 		{
 			sortedTrips(trip.hour, trip.origin, trip.destination)->push_back(&all_trips[i]);
 			//(*organized)[trip.minute][trip.origin][trip.destination].push_back(&all_trips[i]);

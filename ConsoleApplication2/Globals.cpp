@@ -9,8 +9,7 @@
 struct DepartProbability;
 using namespace std;
 
-bool parallel = false;
-int ExecutionMode = 0; // 0 = ridesharing, 1 = EV
+int ExecutionMode = 2; // 0 = ridesharing, 1 = EV
 bool largeCalculations = false; //If true, will determine trip sharing on-the-fly rather than saving sharing sets in memory (This is good for scenarios with closedistance greater than 2.5)
 
 //Induced Person Demand
@@ -18,42 +17,8 @@ double rideShareWeight = 1.0; // total inividual weighting factor
 double householdInteractionWeight = 1.0; // total hh weighting factor
 double mandatoryTripWeight = 2.0;
 double nonMandatoryTripWeight = 1.0;
-double TripsToShare = 0.1; // 10% of trips are ridesharable (fixing them)
+double PercentTripsToShare = 0.1; // 10% of trips are ridesharable (fixing them)
 double sharingRequirementStep = 3.0; // 3% decremental step
-
-
-// Farzad Output settings
-string PERSON_DETAILS_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\PersonOutput.csv"; //Person file output
-string ALL_TRIP_DETAILS_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\AllTripDetails.csv"; //All trips printed out here, with modes changed to '5' if in a group
-string DATA_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\DataPoints.txt";//Important data points written here
-string TRIP_SHARING_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\TripSharing.txt";//Each tripid and its actual sharing list will be written to this file
-bool WriteTripSharing = true;
-string TRIP_DETAILS_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\TripDetails.csv";	//Shared trips will be merged (and mode changed to 5), unshared trips left intact, and written to this
-string SHARED_DETAILS_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\SharedTripDetails.csv"; //Split versions of above
-string UNSHARED_DETAILS_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\UnsharedTripDetails.csv";
-string SHARED_PERSON_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\SharedPersonDetails.csv"; // person file for induced demand 
-bool WritePersonDetails = false;
-string UNSHARED_PERSON_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\UnsharedPersonDetails.csv"; // person file for induced demand
-string HOUSEHOLD_EV_FILE = "D:\\MTC_BASE\\PostProcess\\HouseholdEVData_100.csv";
-bool WriteTripDetails = true;
-
-
-/*
-//Dylan Output settings
-string PERSON_DETAILS_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\test\\PersonOutput.csv"; //Person file output
-string ALL_TRIP_DETAILS_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\test\\AllTripDetails.csv"; //All trips printed out here, with modes changed to '5' if in a group
-string DATA_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\test\\DataPoints.txt";//Important data points written here
-string TRIP_SHARING_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\test\\TripSharing.txt";//Each tripid and its actual sharing list will be written to this file
-bool WriteTripSharing = false;
-string TRIP_DETAILS_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\test\\TripDetails.csv";	//Shared trips will be merged (and mode changed to 5), unshared trips left intact, and written to this
-string SHARED_DETAILS_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\test\\SharedTripDetails.csv"; //Split versions of above
-string UNSHARED_DETAILS_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\test\\UnsharedTripDetails.csv";
-string SHARED_PERSON_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\test\\SharedPersonDetails.csv"; // person file for induced demand 
-bool WritePersonDetails = false;
-string UNSHARED_PERSON_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\test\\UnsharedPersonDetails.csv"; // person file for induced demand
-string HOUSEHOLD_EV_FILE = "D:\\MTC_BASE\\PostProcess\\HouseholdEVData_100.csv";
-bool WriteTripDetails = false;
-*/
 
 //EV algorithm variables:
 int viableHouseholds = 0;
@@ -78,7 +43,6 @@ int DrivingModes[] = { 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 int DoableTripModes[] = { 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0 };  //These modes do not require the trip to be shared for it to be doable
 
 //Trip sharing requirements:  (ordered by computational complexity)
-
 double CLOSE_DISTANCE = 1.0;//double//Two points must be within this to be considered closePoints. Make sure to update vector reserve() calls when changing this
 int MaxNumStops = 6;	//Number of stops must be less than or equal to this
 int MaxIncome = 1000000; //Income must be below this ## maximum ind income is 375k
@@ -88,22 +52,64 @@ int TripModes[] = { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }; /
 unsigned int RandomFailChance = 80; //%chance a trip will randomly not be shareable. This should be an integer from 0-100 
 set<string> TripPurposes = { "Home", "work_low", "work_med", "work_high", "work_very high", "university", "school_high", "school_grade", "atwork_business", "atwork_eat", "atwork_maint", \
 "eatout", "escort_kids", "escort_no kids", "othdiscr", "othmaint", "shopping", "social" }; //Simply list acceptable purposes here
-// Household 
 
-//0  1  2  3  4  5  6  7
+// Household 
+//                             0  1  2  3  4  5  6  7
 int viableHouseholdTypes[] = { 0, 0, 0, 0, 0, 0, 0, 0 }; //fill this in with 1's for valid household types and 0's for the rest
 double householdIncomeMax = 100000;
 int householdVehiclesMax = 5;
 
 
+//Person restrictions
+int maxAge = 100;
+//                0  1  2  3  4  5  6
+int validESR[] = {1, 1, 1, 1, 1, 1, 1};
+int validSex[] = {0, 1, 1}; //1 = male, 2 = female
+int validMSP[] = {1, 1, 1, 1, 1, 1, 1};
+int validPTYPE[]={0, 1, 1, 1, 1, 1, 1, 1, 1};
+
+
+
 //Server settings
 string DISTANCE_FILE = "D:\\MTC_BASE\\database\\DistanceSkimsDatabaseAM.csv";
-string HOUSEHOLD_FILE = "D:\\MTC_BASE\\popsyn\\hhFile.p2011s3a.2010.csv"; 
+string HOUSEHOLD_FILE = "D:\\MTC_BASE\\popsyn\\hhFile.p2011s3a.2010.csv";
 string PERSON_FILE = "D:\\MTC_BASE\\popsyn\\personFile.p2011s3a.2010.csv";// Synthesized works in this context
 string TOUR_FILE = "D:\\MTC_BASE\\main\\indivTourData_4.csv";
 string TRIP_FILE = "D:\\MTC_BASE\\main\\indivTripData_4.csv";
 
+// Farzad Output settings
+string PERSON_DETAILS_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\PersonOutput.csv"; //Person file output
+string ALL_TRIP_DETAILS_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\AllTripDetails.csv"; //All trips printed out here, with modes changed to '5' if in a group
+string DATA_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\DataPoints.txt";//Important data points written here
+string TRIP_SHARING_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\TripSharing.txt";//Each tripid and its actual sharing list will be written to this file
+bool WriteTripSharing = true;
+string TRIP_DETAILS_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\TripDetails.csv";	//Shared trips will be merged (and mode changed to 5), unshared trips left intact, and written to this
+string SHARED_DETAILS_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\SharedTripDetails.csv"; //Split versions of above
+string UNSHARED_DETAILS_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\UnsharedTripDetails.csv";
+string SHARED_PERSON_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\SharedPersonDetails.csv"; // person file for induced demand 
+bool WritePersonDetails = false;
+string UNSHARED_PERSON_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\UnsharedPersonDetails.csv"; // person file for induced demand
+string HOUSEHOLD_EV_FILE = "D:\\MTC_BASE\\PostProcess\\HouseholdEVData_100.csv";
+bool WriteTripDetails = true;
 
+/*
+//Dylan Output settings
+string PERSON_DETAILS_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\test\\PersonOutput.csv"; //Person file output
+string ALL_TRIP_DETAILS_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\test\\AllTripDetails.csv"; //All trips printed out here, with modes changed to '5' if in a group
+string DATA_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\test\\DataPoints.txt";//Important data points written here
+string TRIP_SHARING_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\test\\TripSharing.txt";//Each tripid and its actual sharing list will be written to this file
+bool WriteTripSharing = false;
+string TRIP_DETAILS_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\test\\TripDetails.csv";	//Shared trips will be merged (and mode changed to 5), unshared trips left intact, and written to this
+string SHARED_DETAILS_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\test\\SharedTripDetails.csv"; //Split versions of above
+string UNSHARED_DETAILS_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\test\\UnsharedTripDetails.csv";
+string SHARED_PERSON_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\test\\SharedPersonDetails.csv"; // person file for induced demand 
+bool WritePersonDetails = false;
+string UNSHARED_PERSON_FILE = "D:\\MTC_BASE\\PostProcess\\Sensitivity\\test\\UnsharedPersonDetails.csv"; // person file for induced demand
+string HOUSEHOLD_EV_FILE = "D:\\MTC_BASE\\PostProcess\\HouseholdEVData_100.csv";
+bool WriteTripDetails = false;
+*/
+
+//Internals
 int NUM_LOCATIONS = 1454;		//Number of locations in the simulation
 int DISTANCE_FILE_SIZE = NUM_LOCATIONS * NUM_LOCATIONS;
 
@@ -147,11 +153,8 @@ double householdIncome = 0; //Average household income
 double householdType = 0; //?? TODO: What is this
 double householdVehicles = 0; //Average household vehicles
 
-
-
 bool sortPotentialSharing = false;
 double sharingRequirement = -9999;
-mutex ConflictResolutionLock;
 
 int g_seed = 1; //Random seed. This determines the set of random numbers generated.
 

@@ -20,7 +20,7 @@ extern double householdInteractionWeight;
 
 extern double mandatoryTripWeight;
 extern double nonMandatoryTripWeight;
-extern double TripsToShare;
+extern double PercentTripsToShare;
 
 
 struct Trip; struct DepartProbability;
@@ -79,6 +79,14 @@ extern double householdIncomeMax;
 extern int viableHouseholdTypes[];
 extern int householdVehiclesMax;
 
+//Person restrictions
+extern int maxAge;
+//                0  1  2  3  4  5  6
+extern int validESR[];
+extern int validSex[]; //1 = male, 2 = female
+extern int validMSP[];
+extern int validPTYPE[];
+
 //Count the number of files automatically
 extern double CLOSE_DISTANCE;	//Two points must be within this to be considered closePoints. Make sure to update vector reserve() calls when changing this
 extern int NUM_LOCATIONS;		//Number of locations in the simulation
@@ -134,6 +142,5 @@ extern double sharingRequirementStep;
 extern double sharingRequirement;
 
 extern int g_seed;
-extern mutex ConflictResolutionLock;
 
 #endif
