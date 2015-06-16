@@ -86,13 +86,10 @@
     <ClCompile Include="VGroup.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="InputVariables.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
-    <Text Include="..\Release\inputs.txt">
+    <Text Include="..\x64\Release\inputs.txt">
       <Filter>Header Files</Filter>
     </Text>
   </ItemGroup>

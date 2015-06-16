@@ -4,7 +4,10 @@
 
 
 //Mode of execution. 0 = ridesharing, 1 = EV
-ExecutionMode 0 
+ExecutionMode 1
+
+//If 1, enables extra printouts
+debug 0
 
 //If sets are too large to fit in memory (which is faster), settings this to 1 will generate them on-the-fly instead
 largeCalculations 0
@@ -61,25 +64,25 @@ WritePersonDetails 0
 WriteTripDetails 1
 
 //OUTPUT FILES
-PERSON_DETAILS_FILE D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\PersonOutput.csv //Person file output
-ALL_TRIP_DETAILS_FILE D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\AllTripDetails.csv //All trips printed out here, with modes changed to '5' if in a group
-DATA_FILE D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\DataPoints.txt //Important data points written here
-TRIP_SHARING_FILE D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\TripSharing.txt   //Each tripid and its actual sharing list will be written to this file
-TRIP_DETAILS_FILE D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\TripDetails.csv	//Shared trips will be merged (and mode changed to 5), unshared trips left intact, and written to this
-SHARED_DETAILS_FILE D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\SharedTripDetails.csv //Split versions of above
-UNSHARED_DETAILS_FILE D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\UnsharedTripDetails.csv
-SHARED_PERSON_FILE D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\SharedPersonDetails.csv // person file for induced demand 
-UNSHARED_PERSON_FILE D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\UnsharedPersonDetails.csv // person file for induced demand
-HOUSEHOLD_EV_FILE D:\\MTC_BASE\\PostProcess\\HouseholdEVData_100.csv
+PERSON_DETAILS_FILE D:\MTC_BASE\PostProcess\Sensitivity\new_min2\PersonOutput.csv //Person file output
+ALL_TRIP_DETAILS_FILE D:\MTC_BASE\PostProcess\Sensitivity\new_min2\AllTripDetails.csv //All trips printed out here, with modes changed to '5' if in a group
+DATA_FILE D:\MTC_BASE\PostProcess\Sensitivity\new_min2\DataPoints.txt //Important data points written here
+TRIP_SHARING_FILE D:\MTC_BASE\PostProcess\Sensitivity\new_min2\TripSharing.txt   //Each tripid and its actual sharing list will be written to this file
+TRIP_DETAILS_FILE D:\MTC_BASE\PostProcess\Sensitivity\new_min2\TripDetails.csv	//Shared trips will be merged (and mode changed to 5), unshared trips left intact, and written to this
+SHARED_DETAILS_FILE D:\MTC_BASE\PostProcess\Sensitivity\new_min2\SharedTripDetails.csv //Split versions of above
+UNSHARED_DETAILS_FILE D:\MTC_BASE\PostProcess\Sensitivity\new_min2\UnsharedTripDetails.csv
+SHARED_PERSON_FILE D:\MTC_BASE\PostProcess\Sensitivity\new_min2\SharedPersonDetails.csv // person file for induced demand 
+UNSHARED_PERSON_FILE D:\MTC_BASE\PostProcess\Sensitivity\new_min2\UnsharedPersonDetails.csv // person file for induced demand
+HOUSEHOLD_EV_FILE D:\MTC_BASE\PostProcess\HouseholdEVData_100.csv
 
 //INPUT FILES
-DISTANCE_FILE D:\\MTC_BASE\\database\\DistanceSkimsDatabaseAM.csv
-HOUSEHOLD_FILE D:\\MTC_BASE\\popsyn\\hhFile.p2011s3a.2010.csv
-PERSON_FILE D:\\MTC_BASE\\popsyn\\personFile.p2011s3a.2010.csv // Synthesized works in this context
-TOUR_FILE D:\\MTC_BASE\\main\\indivTourData_4.csv
-TRIP_FILE D:\\MTC_BASE\\main\\indivTripData_4.csv
-JOINT_TOURS_FILE D:\\MTC_BASE\\main\\jointTourData_4.csv
-JOINT_TRIPS_FILE D:\\MTC_BASE\\main\\jointTripData_4.csv
-DEPART_PROBABILITY_FILE C:\\ITS\\ProbabilityLookup.txt
+DISTANCE_FILE D:\MTC_BASE\database\DistanceSkimsDatabaseAM.csv
+HOUSEHOLD_FILE D:\MTC_BASE\popsyn\hhFile.p2011s3a.2010.csv
+PERSON_FILE D:\MTC_BASE\popsyn\personFile.p2011s3a.2010.csv // Synthesized works in this context
+TOUR_FILE D:\MTC_BASE\main\indivTourData_4.csv
+TRIP_FILE D:\MTC_BASE\main\indivTripData_4.csv
+JOINT_TOURS_FILE D:\MTC_BASE\main\jointTourData_4.csv
+JOINT_TRIPS_FILE D:\MTC_BASE\main\jointTripData_4.csv
+DEPART_PROBABILITY_FILE C:\ITS\ProbabilityLookup.txt
 
 

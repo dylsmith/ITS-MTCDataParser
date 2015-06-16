@@ -160,7 +160,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Text Include="..\Release\inputs.txt" />
+    <Text Include="..\x64\Release\inputs.txt" />
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
@@ -181,7 +181,6 @@
     <ClCompile Include="DataClasses.cpp" />
     <ClCompile Include="FastRand.cpp" />
     <ClCompile Include="Globals.cpp" />
-    <ClCompile Include="InputVariables.cpp" />
     <ClCompile Include="LoadData.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="MiscFunctions.cpp" />
