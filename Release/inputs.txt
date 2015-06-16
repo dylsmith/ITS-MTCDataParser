@@ -1,0 +1,85 @@
+//Each line must begin with a variable name, a space, then its value (or values, if it's an array) All text afterwards will be ignored.
+//Note that the lengths of arrays should not be changed. Always fill them with 1's or 0's
+//Lines starting with "//" will also be ignored.
+
+
+//Mode of execution. 0 = ridesharing, 1 = EV
+ExecutionMode 0 
+
+//If sets are too large to fit in memory (which is faster), settings this to 1 will generate them on-the-fly instead
+largeCalculations 0
+
+//Induced Person Demand
+rideShareWeight 1.0            //Total inividual weighting factor 
+householdInteractionWeight 1.0 //Total household weighting factor
+mandatoryTripWeight 2.0    
+nonMandatoryTripWeight 1.0
+PercentTripsToShare 0.1        //Top % of sharing trips to be found
+sharingRequirementStep 3.0     //% decremental step (reduces restriction on trip sharing requirements)
+
+//EV algorithm variables:
+EVAverageRange 100                                         //Average range of an EV vehicle
+EVTripModes 0 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0          //Valid modes for an EV
+
+
+//Sharing algorithm variables:
+Maximize 1                      //1 = Maximize, 0 = Minimize
+MinPeople 2	                //If minimizing, all groups will grow to this size and stop
+MaxPeople 5 	                //If maximizing, all groups will grow to this size and stop
+MaxSharingTimeDifference 15     //How many minutes apart two shared trips can be
+
+//Tour requirements
+TourDoableRequirement 0.5;	                        //For some legs of a tour to be shared, at least this percent must be doable 
+DrivingModes 0 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0      //Each ridesharing group must have one person whose mode is one of these
+DoableTripModes 0 0 0 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0   //These modes do not require the trip to be shared for it to be doable
+
+//Trip sharing requirements:  (ordered by computational complexity)
+CLOSE_DISTANCE 1.0                                //Two points must be within this to be considered closePoints. Make sure to update vector reserve() calls when changing this
+MinDistanceTraveled 30                            //Distance between origin and dest. must be above this8:59 PM 6/15/2015
+MaxNumStops 6	                                  //Number of stops must be less than or equal to this
+MaxIncome 1000000                                 //Income must be below this ## maximum ind income is 375k
+TripModes 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1   //Shareable modes, starting at mode 0
+RandomFailChance 80;                              //% chance a trip will randomly not be shareable. This should be an integer from 0-100 
+TripPurposes 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1  //Acceptable purposes for ride-sharing trips
+
+//Household 
+viableHouseholdTypes 0 0 0 0 0 0 0 0
+householdIncomeMax 100000;
+householdVehiclesMax 5
+
+//Person restrictions
+maxAge 100
+validESR 1 1 1 1 1 1 1
+validSex 0 1 1               //1 = male, 2 = female
+validMSP 1 1 1 1 1 1 1
+validPTYPE 0 1 1 1 1 1 1 1 1
+
+
+//OUTPUT SETTINGS
+WriteTripSharing 1
+WritePersonDetails 0
+WriteTripDetails 1
+
+//OUTPUT FILES
+PERSON_DETAILS_FILE D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\PersonOutput.csv //Person file output
+ALL_TRIP_DETAILS_FILE D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\AllTripDetails.csv //All trips printed out here, with modes changed to '5' if in a group
+DATA_FILE D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\DataPoints.txt //Important data points written here
+TRIP_SHARING_FILE D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\TripSharing.txt   //Each tripid and its actual sharing list will be written to this file
+TRIP_DETAILS_FILE D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\TripDetails.csv	//Shared trips will be merged (and mode changed to 5), unshared trips left intact, and written to this
+SHARED_DETAILS_FILE D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\SharedTripDetails.csv //Split versions of above
+UNSHARED_DETAILS_FILE D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\UnsharedTripDetails.csv
+SHARED_PERSON_FILE D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\SharedPersonDetails.csv // person file for induced demand 
+UNSHARED_PERSON_FILE D:\\MTC_BASE\\PostProcess\\Sensitivity\\new_min2\\UnsharedPersonDetails.csv // person file for induced demand
+HOUSEHOLD_EV_FILE D:\\MTC_BASE\\PostProcess\\HouseholdEVData_100.csv
+
+//INPUT FILES
+DISTANCE_FILE D:\\MTC_BASE\\database\\DistanceSkimsDatabaseAM.csv
+HOUSEHOLD_FILE D:\\MTC_BASE\\popsyn\\hhFile.p2011s3a.2010.csv
+PERSON_FILE D:\\MTC_BASE\\popsyn\\personFile.p2011s3a.2010.csv // Synthesized works in this context
+TOUR_FILE D:\\MTC_BASE\\main\\indivTourData_4.csv
+TRIP_FILE D:\\MTC_BASE\\main\\indivTripData_4.csv
+JOINT_TOURS_FILE D:\\MTC_BASE\\main\\jointTourData_4.csv
+JOINT_TRIPS_FILE D:\\MTC_BASE\\main\\jointTripData_4.csv
+DEPART_PROBABILITY_FILE C:\\ITS\\ProbabilityLookup.txt
+
+

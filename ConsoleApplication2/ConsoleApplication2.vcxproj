@@ -160,7 +160,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Text Include="Inputs.txt" />
+    <Text Include="..\Release\inputs.txt" />
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
