@@ -1069,7 +1069,7 @@ void timerWrapper()
 	}
 	else if (ExecutionMode == 2)
 	{
-		VariableLoader v("C:\\Users\\Dylan\\Desktop\\u.txt");
+		//VariableLoader v("C:\\Users\\Dylan\\Desktop\\u.txt");
 		cout << v.loadVal<int>("5");
 		cout << v.loadVal<string>("3");
 	}
