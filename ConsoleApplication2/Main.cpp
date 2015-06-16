@@ -14,6 +14,7 @@
 #include <iomanip>
 #include <unordered_set>
 #include <sstream>
+#include "VariableLoader.h"
 
 using namespace std;
 
@@ -1006,13 +1007,13 @@ void peopleOutput()
 
 }
 
-#include "VariableLoader.h"
 //Records total execution time
 void timerWrapper()
 {
 	
 	Timer total("Total");
 	cout << tod() << "Starting." << endl;
+	load();
 	if (ExecutionMode == 0) //if ridesharing
 	{
 		reserveSpace();
@@ -1028,13 +1029,7 @@ void timerWrapper()
 		parseJointTrips();
 		analyzeTrips(); // don't order by sharing probability
 
-		/*
-		score each person
-		clear all vgroups after processing is done
-		startingf rom the highest scoring person, try to share trips until 10% of trips are shared
-		then, add all people now sharing to one file
-		and all others to a different one
-		*/
+
 
 		shareTrips();
 		checkTours();
@@ -1069,9 +1064,7 @@ void timerWrapper()
 	}
 	else if (ExecutionMode == 2)
 	{
-		//VariableLoader v("C:\\Users\\Dylan\\Desktop\\u.txt");
-		cout << v.loadVal<int>("5");
-		cout << v.loadVal<string>("3");
+		load();
 	}
 }
 
@@ -1098,8 +1091,8 @@ vector<Person*> sortPeople()
 //Main
 int _tmain(int argc, _TCHAR* argv[])
 {
+	path = argv[0];
 	timerWrapper();
-	
 	cout << "Finished." << endl;
 	pause();
 

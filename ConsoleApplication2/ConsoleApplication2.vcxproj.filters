@@ -48,9 +48,6 @@
     <ClInclude Include="Header.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="InputVariables.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="VariableLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>

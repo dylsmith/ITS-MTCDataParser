@@ -42,7 +42,7 @@ struct Trip
 	int hour;
 	int minute;
 	int mode;
-	string purpose;
+	int purpose;
 	string category;
 
 	//generated vars:

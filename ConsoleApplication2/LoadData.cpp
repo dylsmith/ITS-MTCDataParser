@@ -180,6 +180,18 @@ void parseTours()
 	}
 }
 
+
+string purposes[] = { "work_low", "work_med", "work_high", "work_very high", "university", "school_high", "school_grade", "atwork_business", "atwork_eat", "atwork_maint", "eatout", "escort_kids",
+"escort_no kids", "othdiscr", "othmaint", "shopping", "social" };
+
+int purposeToInt(string purpose)
+{
+	for (int i = 0; i < 17; i++)
+		if (purposes[i] == purpose)
+			return i;
+	return -1;
+}
+
 void parseJointTrips()
 {
 	QuickParser q(JOINT_TRIPS_FILE);
@@ -197,7 +209,7 @@ void parseJointTrips()
 		q.parseComma();
 		q.parseComma();
 		q.parseComma();
-		t.purpose = q.parseString();
+		t.purpose = purposeToInt(q.parseString());
 		t.origin = q.parseInt();
 		q.parseComma();
 		t.destination = q.parseInt();
@@ -235,7 +247,7 @@ void parseTrips()
 		trip.tourid = q.parseInt();
 		q.parseComma();
 		q.parseComma();
-		trip.purpose = q.parseString();
+		trip.purpose = purposeToInt(q.parseString());
 		q.parseComma();
 		q.parseComma();
 		trip.origin = q.parseInt();

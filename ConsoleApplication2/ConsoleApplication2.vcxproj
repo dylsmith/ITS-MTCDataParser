@@ -168,7 +168,6 @@
     <ClInclude Include="Globals.h" />
     <ClInclude Include="DataClasses.h" />
     <ClInclude Include="Header.h" />
-    <ClInclude Include="InputVariables.h" />
     <ClInclude Include="LoadData.h" />
     <ClInclude Include="MiscFunctions.h" />
     <ClInclude Include="QuickParser.h" />

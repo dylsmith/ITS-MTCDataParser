@@ -8,6 +8,7 @@
 #include <vector>
 #include <mutex>
 #include "MiscFunctions.h"
+#include <array>	
 
 using namespace std;
 
@@ -42,7 +43,7 @@ extern string UNSHARED_DETAILS_FILE;
 //EV algorithm variables:
 extern int viableHouseholds;
 extern double EVAverageRange;
-extern int EVTripModes[];
+extern array<int, 19> EVTripModes;
 extern string JOINT_TOURS_FILE;
 extern int JOINT_TOURS_FILE_SIZE;
 extern string JOINT_TRIPS_FILE;
@@ -62,30 +63,30 @@ extern int MaxSharingTimeDifference; //How many minutes apart two shared trips c
 
 //Tour requirements
 extern float TourDoableRequirement;	//For some legs of a tour to be shared, at least this percent must be doable 
-extern int DrivingModes[]; //Each ridesharing group must have one person whose mode is one of these
-extern int DoableTripModes[];  //These modes do not require the trip to be shared for it to be doable
+extern array<int, 19> DrivingModes; //Each ridesharing group must have one person whose mode is one of these
+extern array<int, 19> DoableTripModes;  //These modes do not require the trip to be shared for it to be doable
 
 
 //Trip sharing requirements:  (ordered by computational complexity)
 extern int MaxNumStops;	//Number of stops must be this or more
 extern int MaxIncome; //Income must be below this
 extern float MinDistanceTraveled;	//Distance between origin and dest. must be above this
-extern int TripModes[]; //1 represents that array index is shareable. Right now, indexes modes 1-7 (and not 0) are shareable
+extern array<int, 19> TripModes; //1 represents that array index is shareable. Right now, indexes modes 1-7 (and not 0) are shareable
 extern unsigned int RandomFailChance; //%chance a trip will randomly not be shareable. This should be an integer from 0-100 
-extern set<string> TripPurposes; //Simply list acceptable purposes here
+extern array<int, 18> TripPurposes; //Simply list acceptable purposes here
 
 //Household
 extern double householdIncomeMax;
-extern int viableHouseholdTypes[];
+extern array<int, 8> viableHouseholdTypes;
 extern int householdVehiclesMax;
 
 //Person restrictions
 extern int maxAge;
 //                0  1  2  3  4  5  6
-extern int validESR[];
-extern int validSex[]; //1 = male, 2 = female
-extern int validMSP[];
-extern int validPTYPE[];
+extern array<int, 7> validESR;
+extern array<int, 3> validSex; //1 = male, 2 = female
+extern array<int, 7> validMSP;
+extern array<int, 9> validPTYPE;
 
 //Count the number of files automatically
 extern double CLOSE_DISTANCE;	//Two points must be within this to be considered closePoints. Make sure to update vector reserve() calls when changing this
@@ -142,5 +143,7 @@ extern double sharingRequirementStep;
 extern double sharingRequirement;
 
 extern int g_seed;
+extern wstring path;
+extern int debug;
 
 #endif

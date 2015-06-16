@@ -10,6 +10,7 @@
 #include <unordered_set>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 using namespace std;
 
 void checkTour(Tour& to);
@@ -141,7 +142,8 @@ bool Trip::isShareable()
 		all_people[perid].income < MaxIncome &&							//Income level
 		TripModes[mode] == 1 &&											//Mode is valid check  (array index of the mode must be 1)
 		((fastrand() % 100) + 1) > RandomFailChance &&					//Random chance (random int must be greater than fail chance)
-		TripPurposes.find(purpose) != TripPurposes.end()				//Trip purpose (purpose must be in the set of allowed purposes)
+		find(TripPurposes.begin(), TripPurposes.end(), purpose) != TripPurposes.end()				//Trip purpose (purpose must be in the set of allowed purposes)
+		
 		);
 	return shareable == 1;
 
