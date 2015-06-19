@@ -59,10 +59,10 @@ int householdVehiclesMax;
 
 //Person restrictions
 int maxAge;
-array<int, 7> validESR;
+array<int, 7> validESR; // Employment Status
 array<int, 3> validSex; //1 = male, 2 = female
-array<int, 7> validMSP ;
-array<int, 9> validPTYPE ;
+array<int, 7> validMSP ; // Marital Status
+array<int, 9> validPTYPE ; // Person type
 
 
 
