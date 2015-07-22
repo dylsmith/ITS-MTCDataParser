@@ -54,6 +54,7 @@ array<int, 19> TripModes; //1 represents that array index is shareable. Right no
 unsigned int RandomFailChance; //%chance a trip will randomly not be shareable. This should be an integer from 0-100 
 array<int, 18> TripPurposes; //Simply list acceptable purposes here
 
+
 int minOriginZone;
 int maxOriginZone;
 int minDestinationZone;
