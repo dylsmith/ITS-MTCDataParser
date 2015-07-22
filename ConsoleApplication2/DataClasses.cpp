@@ -137,9 +137,16 @@ bool Trip::isShareable()
 
 	if (shareable == -1)
 		shareable = (
+		origin >= minOriginZone &&
+		origin <= maxOriginZone &&
+		destination >= minDestinationZone &&
+		destination <= maxDestinationZone &&
+		all_households[all_people[perid].hhid].viable && 
+		all_tours[tourid].viable &&
+		all_people[perid].viable && 
 		all_people[perid].tours[tourid]->numStops <= MaxNumStops &&		//Number of stops
 		distanceBetween(origin, destination) > MinDistanceTraveled &&	//Trip length
-		all_people[perid].income < MaxIncome &&							//Income level
+		distanceBetween(origin, destination) < MaxDistanceTraveled &&
 		TripModes[mode] == 1 &&											//Mode is valid check  (array index of the mode must be 1)
 		((fastrand() % 100) + 1) > RandomFailChance &&					//Random chance (random int must be greater than fail chance)
 		find(TripPurposes.begin(), TripPurposes.end(), purpose) != TripPurposes.end()				//Trip purpose (purpose must be in the set of allowed purposes)

@@ -949,7 +949,7 @@ void peopleOutput()
 			Person& p = *personptrs[i];
 			if (p.totalScore < sharingRequirement)
 			{
-				break;
+				continue;
 			}
 			else
 			{
@@ -977,8 +977,7 @@ void peopleOutput()
 								{
 									delete ti; 
 									cout << ">=" << sharingRequirement << ": " << endl << "Total shared trips: " << totalSharedTrips << "/" << numTripsToShare << endl << "  Trips added: " << totalSharedTrips - prevSharedTrips << endl << "  People added: " << peopleAdded << endl;
-									if (WritePersonDetails)
-										writePeopleFile(sharedPeople);
+									writePeopleFile(sharedPeople);
 									return;
 								}
 							}
@@ -1014,6 +1013,9 @@ void timerWrapper()
 	Timer total("Total");
 	cout << tod() << "Starting." << endl;
 	load();
+
+	QuickParser q(HOUSEHOLD_FILE);
+
 	if (ExecutionMode == 0) //if ridesharing
 	{
 		reserveSpace();
@@ -1022,29 +1024,33 @@ void timerWrapper()
 		departprobs = new DepartProbability();
 		parseClosePoints();
 		parseHouseholds();
+
 		parsePeople();
 		parseTours();
 		parseJointTours();
 		parseTrips();
 		parseJointTrips();
-		analyzeTrips(); // don't order by sharing probability
 
 
 
-		shareTrips();
-		checkTours();
-		shareTrips2();
+		analyzeTrips(); // Generates potential s haring lists
+		shareTrips(); //Actually shares trips into groups 
+		checkTours(); //Removes trips from tours with <% sharing
+		shareTrips2(); //Reshares orphaned trips
 
-		countMiles();
+		countMiles(); //Calculates VMT
 		postStatistics();	//DataPoints.txt - shared trip counts, etc.
 
 		if (WriteTripDetails)
 			tripDetailsOutput(); // TripsOutput.txt - each trip's full details, after sharing
+							//Changes all group leaders to mode 5
+							//Writes all trips to one file, all shared trips to one file, and all shared trips to a file
 
 		if (WriteTripSharing)
 			tripSharingOutput(); //TripSharing.txt - each trip's actual sharing list
 
-		//peopleOutput();
+		if (WriteInducedDemand)
+			peopleOutput();
 	}
 	else if (ExecutionMode == 1) //if EV
 	{

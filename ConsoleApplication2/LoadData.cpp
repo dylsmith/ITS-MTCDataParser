@@ -60,29 +60,43 @@ void parseClosePoints()
 	{
 		q.parseNewLine();
 		int hhid = q.parseInt();	all_households[hhid].hhid = hhid;	Household& hh = all_households[hhid];
+		/*
 		q.parseComma();
 		q.parseComma();
 		q.parseComma();
+		*/
+		int t1 = q.parseInt();
+		int t2 = q.parseInt();
+		int t3 = q.parseInt();
 		hh.income = q.parseInt();
-		q.parseComma();
+		int t4 = q.parseInt();
+		//q.parseComma();
 		hh.type = q.parseInt();
 		q.parseComma();
 		q.parseComma();
 		q.parseComma();
 		q.parseComma();
 		hh.autos = q.parseInt();
+		q.parseComma();
+		q.parseComma();
+		q.parseComma();
+		hh.sizecat = q.parseInt();
+		hh.familycat = q.parseInt();
+		q.parseComma();
+		hh.familychildren = q.parseInt();
+		hh.familyworkers = q.parseInt();
 
+		hh.viable = (hh.income < householdIncomeMax && 
+			hh.autos <= householdVehiclesMax && 
+			viableHouseholdTypes[hh.type] && 
+			validSizeCat[hh.sizecat] &&
+			validhfamily[hh.familycat] &&
+			validhchildren[hh.familychildren] &&
+			validhworker[hh.familyworkers]);
 
-		if (hh.income < householdIncome && hh.autos < householdVehiclesMax && viableHouseholdTypes[hh.type])
-		{
-			householdIncome += hh.income;
-			householdVehicles += hh.autos;
-			householdType += hh.type;
-		}
-		else
-		{
-			hh.viable = false;
-		}
+		householdIncome += hh.income;
+		householdVehicles += hh.autos;
+		householdType += hh.type;
 
 
 	}
@@ -117,13 +131,24 @@ void parsePeople()
 		q.parseComma();
 		p.income = q.parseInt();
 		q.parseComma();
-		q.parseComma();
+		p.pemploy = q.parseInt();
 		q.parseComma();
 		p.ptype = q.parseInt();
 
-		if (p.age < maxAge && validESR[p.esr] && validSex[p.sex] && validMSP[p.msp] && validPTYPE[p.ptype])
+		if (p.age < maxAge && 
+			validESR[p.esr] && 
+			validSex[p.sex] && 
+			validMSP[p.msp] && 
+			validPTYPE[p.ptype] && 
+			validPEmploy[p.pemploy] &&
+			p.income < MaxIncome && p.income > MinIncome)
+		{
 			p.viable = true;
-
+		}
+		else
+		{
+			p.viable = false;
+		}
 		all_households[hhid].people.push_back(&p);
 	}
 }
@@ -268,8 +293,9 @@ void parseTrips()
 		if (DoableTripModes[trip.mode])
 			trip.doable = true;
 
-		if (ExecutionMode == 0 && trip.isShareable() && all_households[hhid].viable && all_people[trip.perid].viable)
+		if (ExecutionMode == 0 && trip.isShareable())
 		{
+			
 			sortedTrips(trip.hour, trip.origin, trip.destination)->push_back(&all_trips[i]);
 			//(*organized)[trip.minute][trip.origin][trip.destination].push_back(&all_trips[i]);
 			shareable++;
