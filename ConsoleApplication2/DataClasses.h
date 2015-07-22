@@ -69,7 +69,6 @@ struct Tour
 	//generated vars:
 	vector<Trip*> trips;
 	bool shared;
-	bool viable = false;
 	
 	Tour();
 };

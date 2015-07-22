@@ -142,7 +142,6 @@ bool Trip::isShareable()
 		destination >= minDestinationZone &&
 		destination <= maxDestinationZone &&
 		all_households[all_people[perid].hhid].viable && 
-		all_tours[tourid].viable &&
 		all_people[perid].viable && 
 		all_people[perid].tours[tourid]->numStops <= MaxNumStops &&		//Number of stops
 		distanceBetween(origin, destination) > MinDistanceTraveled &&	//Trip length

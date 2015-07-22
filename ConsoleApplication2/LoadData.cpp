@@ -60,17 +60,12 @@ void parseClosePoints()
 	{
 		q.parseNewLine();
 		int hhid = q.parseInt();	all_households[hhid].hhid = hhid;	Household& hh = all_households[hhid];
-		/*
+	
 		q.parseComma();
 		q.parseComma();
 		q.parseComma();
-		*/
-		int t1 = q.parseInt();
-		int t2 = q.parseInt();
-		int t3 = q.parseInt();
 		hh.income = q.parseInt();
-		int t4 = q.parseInt();
-		//q.parseComma();
+		q.parseComma();
 		hh.type = q.parseInt();
 		q.parseComma();
 		q.parseComma();
@@ -92,7 +87,8 @@ void parseClosePoints()
 			validSizeCat[hh.sizecat] &&
 			validhfamily[hh.familycat] &&
 			validhchildren[hh.familychildren] &&
-			validhworker[hh.familyworkers]);
+			validhworker[hh.familyworkers]
+			);
 
 		householdIncome += hh.income;
 		householdVehicles += hh.autos;
@@ -141,7 +137,9 @@ void parsePeople()
 			validMSP[p.msp] && 
 			validPTYPE[p.ptype] && 
 			validPEmploy[p.pemploy] &&
-			p.income < MaxIncome && p.income > MinIncome)
+			p.income < MaxIncome && 
+			p.income > MinIncome
+			)
 		{
 			p.viable = true;
 		}
