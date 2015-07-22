@@ -119,12 +119,6 @@ void load()
 	PercentTripsToShare = v.loadVal<double>("PercentTripsToShare");
 	sharingRequirementStep = v.loadVal<double>("sharingRequirementStep");
 
-	int minOriginZone;
-	int maxOriginZone;
-	int minDestinationZone;
-	int maxDestinationZone;
-
-
 	minOriginZone = v.loadVal<int>("minOriginZone");
 	maxOriginZone = v.loadVal<int>("maxOriginZone");
 	minDestinationZone = v.loadVal<int>("minDestinationZone");
