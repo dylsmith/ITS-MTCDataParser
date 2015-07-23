@@ -2,6 +2,7 @@
 #define VARLOADER_H
 
 #include "stdafx.h"
+#include "Globals.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -64,6 +65,7 @@ public:
 		}
 
 		cout << "Failed to find " << arg << endl;
+		return 0;
 	}
 
 	template<typename T, int I>
@@ -105,6 +107,8 @@ void load()
 	Timer t("Loading input variables");
 	VariableLoader v;
 
+
+	debug = v.loadVal<int>("debug");
 	ExecutionMode = v.loadVal<int>("ExecutionMode");
 	largeCalculations = v.loadVal<bool>("largeCalculations");
 
@@ -114,6 +118,11 @@ void load()
 	nonMandatoryTripWeight = v.loadVal<double>("nonMandatoryTripWeight");
 	PercentTripsToShare = v.loadVal<double>("PercentTripsToShare");
 	sharingRequirementStep = v.loadVal<double>("sharingRequirementStep");
+
+	minOriginZone = v.loadVal<int>("minOriginZone");
+	maxOriginZone = v.loadVal<int>("maxOriginZone");
+	minDestinationZone = v.loadVal<int>("minDestinationZone");
+	maxDestinationZone = v.loadVal<int>("maxDestinationZone");
 
 	EVAverageRange = v.loadVal<int>("EVAverageRange");
 	v.loadArray<int>("EVTripModes", EVTripModes);
@@ -136,14 +145,21 @@ void load()
 	CLOSE_DISTANCE = v.loadVal<double>("CLOSE_DISTANCE");
 	MaxNumStops = v.loadVal<int>("MaxNumStops");
 	MaxIncome = v.loadVal<int>("MaxIncome");
+	MinIncome = v.loadVal<int>("MinIncome");
 	MinDistanceTraveled = v.loadVal<double>("MinDistanceTraveled");
+	MaxDistanceTraveled = v.loadVal<double>("MaxDistanceTraveled");
 	v.loadArray<int>("TripModes", TripModes);
 	RandomFailChance = v.loadVal<unsigned int>("RandomFailChance");
 	v.loadArray<int>("TripPurposes", TripPurposes);
+	v.loadArray<int>("TourPurposes", TourPurposes);
 
 	v.loadArray<int>("viableHouseholdTypes", viableHouseholdTypes);
 	householdIncomeMax = v.loadVal<int>("householdIncomeMax");
 	householdVehiclesMax = v.loadVal<int>("householdVehiclesMax");
+	v.loadArray<int>("validSizeCat", validSizeCat);
+	v.loadArray<int>("validhfamily", validhfamily);
+	v.loadArray<int>("validhchildren", validhchildren);
+	v.loadArray<int>("validhworker", validhworker);
 
 	maxAge = v.loadVal<int>("maxAge");
 
@@ -151,6 +167,8 @@ void load()
 	v.loadArray<int>("validSex", validSex);
 	v.loadArray<int>("validMSP", validMSP);
 	v.loadArray<int>("validPTYPE", validPTYPE);
+	v.loadArray<int>("validPEmploy", validPEmploy);
+
 
 
 	DISTANCE_FILE = v.loadVal<string>("DISTANCE_FILE");
@@ -159,19 +177,17 @@ void load()
 	TOUR_FILE = v.loadVal<string>("TOUR_FILE");
 	TRIP_FILE = v.loadVal<string>("TRIP_FILE");
 
-	PERSON_DETAILS_FILE = v.loadVal<string>("PERSON_DETAILS_FILE");
 	ALL_TRIP_DETAILS_FILE = v.loadVal<string>("ALL_TRIP_DETAILS_FILE");
 	DATA_FILE = v.loadVal<string>("DATA_FILE");
 	TRIP_SHARING_FILE = v.loadVal<string>("TRIP_SHARING_FILE");
-	TRIP_DETAILS_FILE = v.loadVal<string>("TRIP_DETAILS_FILE");
 	SHARED_DETAILS_FILE = v.loadVal<string>("SHARED_DETAILS_FILE");
 	UNSHARED_DETAILS_FILE = v.loadVal<string>("UNSHARED_DETAILS_FILE");
 	SHARED_PERSON_FILE = v.loadVal<string>("SHARED_PERSON_FILE");
 	UNSHARED_PERSON_FILE = v.loadVal<string>("UNSHARED_PERSON_FILE");
 	HOUSEHOLD_EV_FILE = v.loadVal<string>("HOUSEHOLD_EV_FILE");
 
+	WriteInducedDemand = v.loadVal<int>("WriteInducedDemand ");
 	WriteTripSharing = v.loadVal<int>("WriteTripSharing");
-	WritePersonDetails = v.loadVal<int>("WritePersonDetails");
 	WriteTripDetails = v.loadVal<int>("WriteTripDetails");
 
 	
@@ -182,7 +198,6 @@ void load()
 	TOUR_FILE_SIZE = lineCount(TOUR_FILE) - 1;//8914778
 	TRIP_FILE_SIZE = lineCount(TRIP_FILE) - 1;//22811684
 	
-	debug = v.loadVal<int>("debug");
 }
 
 #endif

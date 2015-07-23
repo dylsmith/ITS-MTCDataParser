@@ -84,6 +84,7 @@ struct Person
 	int sex;
 	int msp;
 	int ptype;
+	int pemploy;
 
 	double milesDriven;
 
@@ -105,6 +106,10 @@ struct Household
 	int autos;
 	int type;
 	int income;
+	int sizecat;
+	int familycat;
+	int familychildren;
+	int familyworkers;
 	double jointMilesDriven;
 	double indivMilesDriven;
 	vector<Person*> people;

@@ -40,29 +40,45 @@ int MaxSharingTimeDifference;// 60; //How many minutes apart two shared trips ca
 float TourDoableRequirement;	//For some legs of a tour to be shared, at least this percent must be doable 
 array<int, 19> DrivingModes; //Each ridesharing group must have one person whose mode is one of these
 array<int, 19> DoableTripModes;  //These modes do not require the trip to be shared for it to be doable
+array<int, 17> TourPurposes;
 
 //Trip sharing requirements:  (ordered by computational complexity)
 double CLOSE_DISTANCE;//double//Two points must be within this to be considered closePoints. Make sure to update vector reserve() calls when changing this
 int MaxNumStops;	//Number of stops must be less than or equal to this
 int MaxIncome; //Income must be below this ## maximum ind income is 375k
+int MinIncome;
 float MinDistanceTraveled;	//Distance between origin and dest. must be above this
+float MaxDistanceTraveled;
 //                  0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18
 array<int, 19> TripModes; //1 represents that array index is shareable. Right now, indexes modes 1-7 (and not 0) are shareable
 unsigned int RandomFailChance; //%chance a trip will randomly not be shareable. This should be an integer from 0-100 
 array<int, 18> TripPurposes; //Simply list acceptable purposes here
 
+
+int minOriginZone;
+int maxOriginZone;
+int minDestinationZone;
+int maxDestinationZone;
+
 // Household 
 array<int, 8> viableHouseholdTypes; //fill this in with 1's for valid household types and 0's for the rest
 double householdIncomeMax;
 int householdVehiclesMax;
+array<int, 5> validSizeCat;
+array<int, 3> validhfamily;
+array<int, 2> validhchildren;
+array<int, 3> validhworker;
+
+
 
 
 //Person restrictions
 int maxAge;
-array<int, 7> validESR;
+array<int, 7> validESR; // Employment Status
 array<int, 3> validSex; //1 = male, 2 = female
-array<int, 7> validMSP ;
-array<int, 9> validPTYPE ;
+array<int, 7> validMSP ; // Marital Status
+array<int, 9> validPTYPE ; // Person type
+array<int, 5> validPEmploy;
 
 
 
@@ -74,19 +90,18 @@ string TOUR_FILE;
 string TRIP_FILE;
 
 // Farzad Output settings
-string PERSON_DETAILS_FILE; //Person file output
-string ALL_TRIP_DETAILS_FILE; //All trips printed out here, with modes changed to '5' if in a group
+string TRIP_DETAILS_FILE;
+string TRIP_SHARING_FILE;
 string DATA_FILE;//Important data points written here
-string TRIP_SHARING_FILE;//Each tripid and its actual sharing list will be written to this file
 bool WriteTripSharing;
-string TRIP_DETAILS_FILE;	//Shared trips will be merged (and mode changed to 5), unshared trips left intact, and written to this
+string ALL_TRIP_DETAILS_FILE; //All trips printed out here, with modes changed to '5' if in a group
 string SHARED_DETAILS_FILE; //Split versions of above
 string UNSHARED_DETAILS_FILE;
 string SHARED_PERSON_FILE; // person file for induced demand 
-bool WritePersonDetails;
 string UNSHARED_PERSON_FILE; // person file for induced demand
 string HOUSEHOLD_EV_FILE;
 bool WriteTripDetails;
+bool WriteInducedDemand;
 
 /*
 //Dylan Output settings
