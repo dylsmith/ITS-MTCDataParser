@@ -151,7 +151,6 @@ void load()
 	v.loadArray<int>("TripModes", TripModes);
 	RandomFailChance = v.loadVal<unsigned int>("RandomFailChance");
 	v.loadArray<int>("TripPurposes", TripPurposes);
-	v.loadArray<int>("TourPurposes", TourPurposes);
 
 	v.loadArray<int>("viableHouseholdTypes", viableHouseholdTypes);
 	householdIncomeMax = v.loadVal<int>("householdIncomeMax");
@@ -186,7 +185,7 @@ void load()
 	UNSHARED_PERSON_FILE = v.loadVal<string>("UNSHARED_PERSON_FILE");
 	HOUSEHOLD_EV_FILE = v.loadVal<string>("HOUSEHOLD_EV_FILE");
 
-	WriteInducedDemand = v.loadVal<int>("WriteInducedDemand ");
+	WriteInducedDemand = v.loadVal<int>("WriteInducedDemand");
 	WriteTripSharing = v.loadVal<int>("WriteTripSharing");
 	WriteTripDetails = v.loadVal<int>("WriteTripDetails");
 

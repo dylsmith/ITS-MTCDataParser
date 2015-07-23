@@ -4,7 +4,7 @@
 
 
 //Mode of execution. 0 = ridesharing, 1 = EV
-ExecutionMode 1
+ExecutionMode 0
 
 //If 1, enables extra printouts
 debug 0
@@ -38,30 +38,44 @@ DoableTripModes 0 0 0 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0   //These modes do not req
 
 //Trip sharing requirements:  (ordered by computational complexity)
 CLOSE_DISTANCE 1.0                                //Two points must be within this to be considered closePoints. Make sure to update vector reserve() calls when changing this
-MinDistanceTraveled 30                            //Distance between origin and dest. must be above this8:59 PM 6/15/2015
+MinDistanceTraveled 30                            //Distance between origin and dest. must be above this
+MaxDistanceTraveled 300
 MaxNumStops 6	                                  //Number of stops must be less than or equal to this
-MaxIncome 1000000                                 //Income must be below this ## maximum ind income is 375k
 TripModes 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1   //Shareable modes, starting at mode 0
 RandomFailChance 80;                              //% chance a trip will randomly not be shareable. This should be an integer from 0-100 
 TripPurposes 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1  //Acceptable purposes for ride-sharing trips
 
+minOriginZone 0
+maxOriginZone 1454
+minDestinationZone 0
+maxDestinationZone 1454
+
 //Household 
-viableHouseholdTypes 0 0 0 0 0 0 0 0
+viableHouseholdTypes 1 1 1 1 1 1 1 1
 householdIncomeMax 100000;
 householdVehiclesMax 5
 
+validSizeCat 0 1 1 1 1
+validhfamily 0 1 1
+validhchildren 1 1
+validhworker 1 1 1
+
 //Person restrictions
+MaxIncome 1000000                                 //Income must be below this ## maximum ind income is 375k
+MinIncome 0
 maxAge 100
 validESR 1 1 1 1 1 1 1
 validSex 0 1 1               //1 = male, 2 = female
 validMSP 1 1 1 1 1 1 1
 validPTYPE 0 1 1 1 1 1 1 1 1
+validPEmploy 0 1 1 1 1
 
 
 //OUTPUT SETTINGS
 WriteTripSharing 1
 WritePersonDetails 0
 WriteTripDetails 1
+WriteInducedDemand 0
 
 //OUTPUT FILES
 PERSON_DETAILS_FILE D:\MTC_BASE\PostProcess\Sensitivity\new_min2\PersonOutput.csv //Person file output

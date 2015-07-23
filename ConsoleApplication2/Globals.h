@@ -1,7 +1,6 @@
 #ifndef GLOBALS_H
 	#define GLOBALS_H
 
-//#include "DataClasses.h"
 #include "stdafx.h"
 #include <set>
 #include <string>
